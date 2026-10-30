@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 
+from app.config import settings
 from app.defaults import DEFAULT_CATEGORIES
 from app.deps import CurrentUser, DbSession
 from app.models import Category, User
@@ -15,6 +16,8 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def register(payload: UserCreate, db: DbSession):
+    if not settings.allow_registration:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Registration is closed")
     email = payload.email.lower()
     if db.scalar(select(User).where(User.email == email)):
         raise HTTPException(status.HTTP_409_CONFLICT, "Email already registered")

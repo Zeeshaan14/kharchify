@@ -1,3 +1,5 @@
+import hashlib
+import secrets
 from datetime import datetime, timedelta, timezone
 
 import jwt
@@ -6,6 +8,7 @@ from pwdlib import PasswordHash
 from app.config import settings
 
 ALGORITHM = "HS256"
+API_TOKEN_PREFIX = "kh_"
 password_hash = PasswordHash.recommended()
 
 
@@ -28,3 +31,12 @@ def decode_access_token(token: str) -> int | None:
         return int(payload["sub"])
     except (jwt.InvalidTokenError, KeyError, ValueError):
         return None
+
+
+def generate_api_token() -> str:
+    return API_TOKEN_PREFIX + secrets.token_urlsafe(32)
+
+
+def hash_api_token(token: str) -> str:
+    # API tokens are long random strings, so a fast hash is enough (unlike passwords).
+    return hashlib.sha256(token.encode()).hexdigest()

@@ -1,5 +1,8 @@
-from sqlalchemy import select
+import pytest
+from sqlalchemy import select, text
+from sqlalchemy.exc import IntegrityError
 
+from app.config import Settings, settings
 from app.defaults import DEFAULT_CATEGORIES
 from app.models import Category, User
 
@@ -46,3 +49,40 @@ def test_me_requires_valid_token(client):
     assert client.get("/auth/me").status_code == 401
     res = client.get("/auth/me", headers={"Authorization": "Bearer not-a-token"})
     assert res.status_code == 401
+
+
+def test_deleting_user_cascades_to_all_their_data(client, db, auth_headers, food_id):
+    client.post("/expenses", json={"amount": 10, "category_id": food_id}, headers=auth_headers)
+    client.post("/tokens", json={"name": "phone"}, headers=auth_headers)
+
+    # Raw SQL so the database's foreign keys do the work, not the ORM.
+    db.execute(text("DELETE FROM users"))
+    db.commit()
+
+    for table in ("expenses", "categories", "api_tokens"):
+        assert db.scalar(text(f"SELECT COUNT(*) FROM {table}")) == 0
+
+
+def test_cannot_delete_category_that_has_expenses(client, db, auth_headers, food_id):
+    client.post("/expenses", json={"amount": 10, "category_id": food_id}, headers=auth_headers)
+    with pytest.raises(IntegrityError):
+        db.execute(text("DELETE FROM categories WHERE id = :id"), {"id": food_id})
+    db.rollback()
+
+
+def test_registration_can_be_closed(client, monkeypatch):
+    monkeypatch.setattr(settings, "allow_registration", False)
+    assert client.post("/auth/register", json=USER).status_code == 403
+
+
+@pytest.mark.parametrize(
+    "url, expected",
+    [
+        ("postgres://u:p@host/db", "postgresql+psycopg://u:p@host/db"),
+        ("postgresql://u:p@host/db?sslmode=require", "postgresql+psycopg://u:p@host/db?sslmode=require"),
+        ("postgresql+psycopg://u:p@host/db", "postgresql+psycopg://u:p@host/db"),
+        ("sqlite:///./kharchify.db", "sqlite:///./kharchify.db"),
+    ],
+)
+def test_database_url_uses_psycopg(url, expected):
+    assert Settings(database_url=url).database_url == expected

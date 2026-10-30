@@ -1,8 +1,8 @@
-"""initial tables
+"""initial schema
 
-Revision ID: 30c1852d1f6c
+Revision ID: 28c789ffc33b
 Revises: 
-Create Date: 2026-10-30 21:16:46.742509
+Create Date: 2026-10-30 21:43:31.072838
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '30c1852d1f6c'
+revision: str = '28c789ffc33b'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -26,11 +26,27 @@ def upgrade() -> None:
     sa.Column('email', sa.String(length=255), nullable=False),
     sa.Column('name', sa.String(length=100), nullable=False),
     sa.Column('hashed_password', sa.String(length=255), nullable=False),
+    sa.Column('timezone', sa.String(length=64), server_default='Asia/Kolkata', nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_users'))
     )
     with op.batch_alter_table('users', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_users_email'), ['email'], unique=True)
+
+    op.create_table('api_tokens',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=50), nullable=False),
+    sa.Column('token_hash', sa.String(length=64), nullable=False),
+    sa.Column('prefix', sa.String(length=12), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
+    sa.Column('last_used_at', sa.DateTime(timezone=True), nullable=True),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('fk_api_tokens_user_id_users'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_api_tokens'))
+    )
+    with op.batch_alter_table('api_tokens', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_api_tokens_token_hash'), ['token_hash'], unique=True)
+        batch_op.create_index(batch_op.f('ix_api_tokens_user_id'), ['user_id'], unique=False)
 
     op.create_table('categories',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -38,9 +54,10 @@ def upgrade() -> None:
     sa.Column('name', sa.String(length=50), nullable=False),
     sa.Column('icon', sa.String(length=16), nullable=True),
     sa.Column('color', sa.String(length=7), nullable=True),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('user_id', 'name')
+    sa.Column('is_archived', sa.Boolean(), server_default=sa.false(), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('fk_categories_user_id_users'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_categories')),
+    sa.UniqueConstraint('user_id', 'name', name=op.f('uq_categories_user_id_name'))
     )
     with op.batch_alter_table('categories', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_categories_user_id'), ['user_id'], unique=False)
@@ -51,9 +68,9 @@ def upgrade() -> None:
     sa.Column('category_id', sa.Integer(), nullable=True),
     sa.Column('period', sa.String(length=10), nullable=False),
     sa.Column('amount', sa.Numeric(precision=12, scale=2), nullable=False),
-    sa.ForeignKeyConstraint(['category_id'], ['categories.id'], ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.ForeignKeyConstraint(['category_id'], ['categories.id'], name=op.f('fk_budgets_category_id_categories'), ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('fk_budgets_user_id_users'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_budgets'))
     )
     with op.batch_alter_table('budgets', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_budgets_user_id'), ['user_id'], unique=False)
@@ -66,10 +83,11 @@ def upgrade() -> None:
     sa.Column('spent_on', sa.Date(), nullable=False),
     sa.Column('payment_method', sa.String(length=20), nullable=False),
     sa.Column('note', sa.String(length=255), nullable=True),
+    sa.Column('is_need', sa.Boolean(), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
-    sa.ForeignKeyConstraint(['category_id'], ['categories.id'], ondelete='RESTRICT'),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
+    sa.ForeignKeyConstraint(['category_id'], ['categories.id'], name=op.f('fk_expenses_category_id_categories')),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('fk_expenses_user_id_users'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_expenses'))
     )
     with op.batch_alter_table('expenses', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_expenses_category_id'), ['category_id'], unique=False)
@@ -96,6 +114,11 @@ def downgrade() -> None:
         batch_op.drop_index(batch_op.f('ix_categories_user_id'))
 
     op.drop_table('categories')
+    with op.batch_alter_table('api_tokens', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_api_tokens_user_id'))
+        batch_op.drop_index(batch_op.f('ix_api_tokens_token_hash'))
+
+    op.drop_table('api_tokens')
     with op.batch_alter_table('users', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_users_email'))
 

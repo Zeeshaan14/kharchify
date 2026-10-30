@@ -30,13 +30,26 @@ def client(db):
     app.dependency_overrides.clear()
 
 
-@pytest.fixture
-def auth_headers(client):
-    client.post(
-        "/auth/register",
-        json={"email": "me@example.com", "name": "Me", "password": "secret123"},
-    )
+def register_and_login(client, email):
+    client.post("/auth/register", json={"email": email, "name": "Me", "password": "secret123"})
     token = client.post(
-        "/auth/login", data={"username": "me@example.com", "password": "secret123"}
+        "/auth/login", data={"username": email, "password": "secret123"}
     ).json()["access_token"]
     return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def auth_headers(client):
+    return register_and_login(client, "me@example.com")
+
+
+@pytest.fixture
+def other_headers(client):
+    """A second user, for checking data isolation."""
+    return register_and_login(client, "someone-else@example.com")
+
+
+@pytest.fixture
+def food_id(client, auth_headers):
+    categories = client.get("/categories", headers=auth_headers).json()
+    return next(c["id"] for c in categories if c["name"] == "Food")
