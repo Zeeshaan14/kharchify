@@ -38,7 +38,7 @@ iPhone Shortcut / browser ──HTTPS──▶ Vercel (FastAPI function, Singapo
    Now nobody else can sign up on your server.
 
 ## 5. Connect the iPhone Shortcut
-Follow [iphone-shortcut.md](iphone-shortcut.md) from **Step 1**, with `https://<your-url>` as the API URL. Works on Wi-Fi and mobile data.
+Follow [iphone-shortcut.md](iphone-shortcut.md), with `https://<your-url>` as the API URL. Works on Wi-Fi and mobile data.
 
 ## Notes
 - **Use the production URL** (`<project>.vercel.app`). Preview URLs (per branch/commit) are login-protected by Vercel and use the same database without migrating it.

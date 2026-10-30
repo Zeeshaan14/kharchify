@@ -7,7 +7,7 @@ Kharchify is a personal expense tracker (INR): log expenses by category, set dai
 ## Layout
 - `backend/` — FastAPI + SQLAlchemy 2.0 + Alembic. SQLite in dev, PostgreSQL planned for deployment.
 - `frontend/` — not built yet. Planned: Next.js (App Router) + TypeScript, Tailwind, Recharts, installable as a PWA (no separate native app). Next.js is UI only: all data goes through the FastAPI API — no Next.js API routes or direct DB access.
-- `docs/iphone-shortcut.md` — user guide for the iPhone Shortcut that calls `GET /categories` and `POST /expenses` with an API token. Keep it in sync if those endpoints' request/response shapes change.
+- `docs/iphone-shortcut.md` — user guide for the iPhone Shortcut (iOS 27) that calls `POST /expenses` with an API token, sending `amount` and `category_id` as JSON strings and showing the response's `message`. Category ids are hard-coded in the Shortcut, so changing ids or that request/response shape breaks it — keep the guide in sync.
 
 ## Deployment
 - Backend on Vercel (serverless FastAPI, project root `backend/`, entrypoint `app/main.py`, region `sin1`, config `backend/vercel.json`); database Neon PostgreSQL via Vercel Storage. Steps in `docs/DEPLOY.md`.
