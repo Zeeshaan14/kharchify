@@ -104,7 +104,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <main className="min-w-0 flex-1 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-36 sm:px-6 lg:px-8 lg:pt-8 lg:pb-12">
+      <main className="min-w-0 flex-1 px-4 pt-[calc(env(safe-area-inset-top)+1.25rem)] pb-36 sm:px-6 lg:px-8 lg:pt-8 lg:pb-12">
         {/* Page transition */}
         <motion.div
           key={pathname}

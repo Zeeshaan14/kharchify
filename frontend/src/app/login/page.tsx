@@ -32,7 +32,7 @@ export default function LoginPage() {
   return (
     // Flex (not grid place-items-center): a grid column would size to the card's max width
     // and overflow narrow phones. Safe-area padding keeps content clear of the status bar.
-    <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))]">
+    <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-5 pt-[calc(env(safe-area-inset-top)+2rem)] pb-[max(2rem,env(safe-area-inset-bottom))]">
       <div className="pointer-events-none absolute -left-32 top-1/4 size-[28rem] rounded-full bg-accent/30 blur-[120px]" />
       <div className="pointer-events-none absolute -right-32 bottom-1/4 size-[28rem] rounded-full bg-accent-2/20 blur-[120px]" />
 
