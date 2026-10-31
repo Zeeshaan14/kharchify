@@ -151,8 +151,8 @@ export function ProgressBar({ percent, status, className }: { percent: number; s
       <motion.div
         className="h-full rounded-full"
         style={{
-          background: `linear-gradient(90deg, color-mix(in oklab, ${color} 55%, transparent), ${color})`,
-          boxShadow: `0 0 12px ${color}`,
+          background: color,
+          boxShadow: `0 0 8px color-mix(in oklab, ${color} 45%, transparent)`,
         }}
         initial={{ width: 0 }}
         animate={{ width: `${Math.max(Math.min(percent, 100), 2)}%` }}
@@ -176,34 +176,26 @@ export function Ring({
   stroke?: number;
   children?: ReactNode;
 }) {
-  // useId() contains colons, which break url(#…) references.
-  const gid = `ring${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const r = (size - stroke) / 2;
   const circumference = 2 * Math.PI * r;
   const filled = Math.min(percent, 100) / 100;
   return (
     <div className="relative grid shrink-0 place-items-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90 overflow-visible">
-        <defs>
-          <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="var(--accent)" />
-            <stop offset="100%" stopColor={color} />
-          </linearGradient>
-        </defs>
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--surface-3)" strokeWidth={stroke} />
         <motion.circle
           cx={size / 2}
           cy={size / 2}
           r={r}
           fill="none"
-          stroke={`url(#${gid})`}
+          stroke={color}
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={circumference}
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset: circumference * (1 - filled) }}
           transition={{ type: "spring", stiffness: 50, damping: 18 }}
-          style={{ filter: `drop-shadow(0 0 10px ${color})` }}
+          style={{ filter: `drop-shadow(0 0 6px color-mix(in oklab, ${color} 55%, transparent))` }}
         />
       </svg>
       <div className="absolute inset-0 grid place-items-center text-center">{children}</div>

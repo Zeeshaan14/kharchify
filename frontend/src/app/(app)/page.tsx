@@ -166,8 +166,17 @@ function Hero({ data, isCurrent }: { data: DashboardSummary; isCurrent: boolean 
           <p className="mt-4 text-sm text-muted">
             {showSafe ? (
               <>
-                <Money value={monthly!.remaining} whole className="font-semibold text-fg" /> left for {data.days_left}{" "}
-                {data.days_left === 1 ? "day" : "days"} · <Money value={data.spent_today} className="text-fg" /> spent today
+                {Number(monthly!.remaining) < 0 ? (
+                  <>
+                    <Money value={monthly!.remaining} whole className="font-semibold text-bad" /> over budget
+                  </>
+                ) : (
+                  <>
+                    <Money value={monthly!.remaining} whole className="font-semibold text-fg" /> left for {data.days_left}{" "}
+                    {data.days_left === 1 ? "day" : "days"}
+                  </>
+                )}{" "}
+                · <Money value={data.spent_today} className="text-fg" /> spent today
               </>
             ) : isCurrent ? (
               <Link href="/budgets" className="inline-flex items-center gap-1 font-medium text-accent-2 hover:underline">
