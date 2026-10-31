@@ -2,8 +2,8 @@
 
 import { clsx } from "clsx";
 import { Loader2 } from "lucide-react";
-import { animate, motion, useMotionValue, useTransform } from "motion/react";
-import { type ButtonHTMLAttributes, type CSSProperties, type ReactNode, useEffect, useId } from "react";
+import { motion, useReducedMotion } from "motion/react";
+import { type ButtonHTMLAttributes, type CSSProperties, type ReactNode, useId } from "react";
 import { inrFmt } from "@/lib/format";
 import type { BudgetStatus } from "@/lib/types";
 
@@ -53,19 +53,60 @@ export function Money({
   );
 }
 
-/** Money that counts up to its value. */
-export function AnimatedMoney({ value, className }: { value: string | number; className?: string }) {
-  const target = Number(value);
-  const mv = useMotionValue(0);
-  const rupees = useTransform(mv, (v) => inrFmt(Math.round(v), { whole: true }).replace("₹", ""));
-  useEffect(() => {
-    const controls = animate(mv, target, { duration: 1.1, ease: [0.16, 1, 0.3, 1] });
-    return () => controls.stop();
-  }, [mv, target]);
+const DIGITS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+/** One odometer wheel: a 0–9 column that rolls to `digit`. */
+function Wheel({ digit, delay }: { digit: number; delay: number }) {
+  const reduce = useReducedMotion();
   return (
-    <span className={clsx("num whitespace-nowrap", className)}>
-      <span className="mr-[0.06em] text-[0.55em] font-medium opacity-50">₹</span>
-      <motion.span>{rupees}</motion.span>
+    // An invisible copy of the digit sizes the wheel exactly like the static text around it.
+    <span className="relative inline-block h-[1.1em] overflow-hidden leading-[1.1em]">
+      <span className="invisible">{digit}</span>
+      <motion.span
+        className="absolute inset-x-0 top-0 flex flex-col"
+        initial={{ y: reduce ? `${-digit * 10}%` : "0%" }}
+        animate={{ y: `${-digit * 10}%` }}
+        transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 28, damping: 12, mass: 1.2, delay }}
+      >
+        {DIGITS.map((n) => (
+          <span key={n} className="block h-[1.1em] text-center leading-[1.1em]">
+            {n}
+          </span>
+        ))}
+      </motion.span>
+    </span>
+  );
+}
+
+/**
+ * Money as an odometer: every digit rolls from 0 on first show, and from its old value whenever the
+ * amount changes (e.g. after adding an expense). Paise stay static and small.
+ */
+export function RollingMoney({ value, whole = false, className }: { value: string | number; whole?: boolean; className?: string }) {
+  const text = inrFmt(Math.abs(Number(value)), { whole }).replace("₹", "");
+  const [rupees, paise] = text.split(".");
+  const chars = rupees.split("");
+  return (
+    <span className={clsx("num inline-flex items-end whitespace-nowrap leading-[1.1]", className)} role="text" aria-label={`₹${text}`}>
+      <span aria-hidden className="mr-[0.08em] mb-[0.18em] text-[0.55em] leading-none font-medium opacity-50">
+        ₹
+      </span>
+      {chars.map((c, i) => {
+        // Keyed from the right, so existing wheels keep rolling when the number gains a digit.
+        const fromRight = chars.length - i;
+        return /\d/.test(c) ? (
+          <Wheel key={`d${fromRight}`} digit={Number(c)} delay={0.1 + (chars.length - fromRight) * 0.09} />
+        ) : (
+          <span key={`s${fromRight}`} aria-hidden className="inline-block h-[1.1em] leading-[1.1em]">
+            {c}
+          </span>
+        );
+      })}
+      {paise && (
+        <span aria-hidden className="mb-[0.16em] text-[0.6em] leading-none opacity-50">
+          .{paise}
+        </span>
+      )}
     </span>
   );
 }

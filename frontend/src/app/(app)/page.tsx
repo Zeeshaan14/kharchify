@@ -9,7 +9,6 @@ import { CategoryBreakdown, DailyBars, PaceChart, Sparkline } from "@/components
 import { ExpenseRow } from "@/components/expense-row";
 import { MonthSwitcher, useMonth } from "@/components/month-switcher";
 import {
-  AnimatedMoney,
   Card,
   CardTitle,
   EmptyState,
@@ -17,6 +16,7 @@ import {
   Money,
   ProgressBar,
   Ring,
+  RollingMoney,
   Segmented,
   Skeleton,
   STATUS_COLOR,
@@ -68,7 +68,7 @@ function Dashboard({ data, isCurrent }: { data: DashboardSummary; isCurrent: boo
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
         <motion.div {...rise(1)}>
           <Stat icon={<Sun className="size-4" />} label="Today" glow={daily ? STATUS_COLOR[daily.status] : undefined}>
-            <Money value={data.spent_today} className="text-2xl font-semibold sm:text-3xl" />
+            <RollingMoney value={data.spent_today} className="text-2xl font-semibold sm:text-3xl" />
             {daily ? (
               <>
                 <ProgressBar percent={daily.percent} className="mt-3" />
@@ -83,7 +83,7 @@ function Dashboard({ data, isCurrent }: { data: DashboardSummary; isCurrent: boo
         </motion.div>
         <motion.div {...rise(2)}>
           <Stat icon={<Wallet className="size-4" />} label={isCurrent ? "This month" : "Month total"}>
-            <Money value={data.month_total} whole className="text-2xl font-semibold sm:text-3xl" />
+            <RollingMoney value={data.month_total} whole className="text-2xl font-semibold sm:text-3xl" />
             {monthly ? (
               <>
                 <ProgressBar percent={monthly.percent} className="mt-3" />
@@ -159,10 +159,9 @@ function Hero({ data, isCurrent }: { data: DashboardSummary; isCurrent: boolean 
             <Sparkles className="size-3.5 text-accent-2" />
             {showSafe ? "Safe to spend today" : isCurrent ? "Spent this month" : `Spent in ${monthLabel(data.month)}`}
           </p>
-          <AnimatedMoney
-            value={showSafe ? data.safe_to_spend_today! : data.month_total}
-            className="mt-3 block text-6xl font-semibold leading-none sm:text-7xl"
-          />
+          <div className="mt-3">
+            <RollingMoney value={showSafe ? data.safe_to_spend_today! : data.month_total} whole className="text-6xl font-semibold sm:text-7xl" />
+          </div>
           <p className="mt-4 text-sm text-muted">
             {showSafe ? (
               <>
