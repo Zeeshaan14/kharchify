@@ -2,18 +2,19 @@
 
 import { clsx } from "clsx";
 import { eachDayOfInterval, endOfMonth, endOfWeek, format, isSameMonth, parseISO, startOfMonth, startOfWeek } from "date-fns";
-import { CalendarDays, Flame, Plus, Sparkles } from "lucide-react";
+import { CalendarDays, Flame, PiggyBank, Plus, Sparkles, Target } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { useExpenseSheet } from "@/components/expense-sheet";
 import { ExpenseRow } from "@/components/expense-row";
 import { MonthSwitcher, useMonth } from "@/components/month-switcher";
-import { Button, Card, EmptyState, ErrorNote, Skeleton } from "@/components/ui/primitives";
+import { Button, Card, EmptyState, ErrorNote, Money, ProgressBar, Skeleton, STATUS_COLOR } from "@/components/ui/primitives";
 import { useCategoryLookup } from "@/lib/categories";
-import { dayLabel, inrCompact, inrFmt } from "@/lib/format";
+import { dayLabel, inrCompact, inrFmt, monthLabel } from "@/lib/format";
 import { useDashboard, useExpensesBetween } from "@/lib/queries";
-import type { Expense } from "@/lib/types";
+import type { DashboardSummary, Expense } from "@/lib/types";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const iso = (d: Date) => format(d, "yyyy-MM-dd");
@@ -71,6 +72,7 @@ export default function CalendarPage() {
     <>
       <PageHeader title="Calendar" subtitle="Your spending, day by day" action={<MonthSwitcher month={month} onChange={setMonth} />} />
       <ErrorNote error={error} />
+      {summary && <BudgetBanner summary={summary} isCurrent={isCurrent} />}
 
       <div className="mb-4 grid grid-cols-3 gap-3">
         <Stat icon={<Sparkles className="size-4 text-good" />} label="No-spend days" value={String(noSpendDays)} />
@@ -178,6 +180,89 @@ export default function CalendarPage() {
         </Card>
       </div>
     </>
+  );
+}
+
+/** The month's budget at a glance: limit, spent, left, and the daily limit the day colours use. */
+function BudgetBanner({ summary, isCurrent }: { summary: DashboardSummary; isCurrent: boolean }) {
+  const monthly = summary.monthly_budget;
+  const daily = summary.daily_budget;
+  const name = monthLabel(summary.month).split(" ")[0];
+
+  if (!monthly) {
+    return (
+      <Card className="mb-4 flex flex-wrap items-center justify-between gap-3 p-4">
+        <div className="flex items-center gap-3">
+          <span className="grid size-10 place-items-center rounded-2xl border border-line bg-surface-2 text-muted">
+            <PiggyBank className="size-5" />
+          </span>
+          <div>
+            <p className="text-sm font-semibold">No budget for {name}</p>
+            <p className="text-xs text-muted">
+              Spent <Money value={summary.month_total} whole className="text-fg" /> so far
+            </p>
+          </div>
+        </div>
+        <Link href="/budgets" className="rounded-xl border border-line bg-surface-2 px-3.5 py-2 text-xs font-semibold hover:bg-surface-3">
+          Set a monthly budget →
+        </Link>
+      </Card>
+    );
+  }
+
+  const over = Number(monthly.remaining) < 0;
+  const color = STATUS_COLOR[monthly.status];
+  return (
+    <Card className="mb-4 p-4 sm:p-5">
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+        <div className="flex items-center gap-3">
+          <span className="grid size-10 place-items-center rounded-2xl border border-line bg-surface-2" style={{ color, boxShadow: `0 0 16px -6px ${color}` }}>
+            <Target className="size-5" />
+          </span>
+          <div>
+            <p className="label">{name} budget</p>
+            <Money value={monthly.limit} whole className="text-2xl font-semibold" />
+          </div>
+        </div>
+        <div className="flex gap-6 text-sm">
+          <div>
+            <p className="label">Spent</p>
+            <Money value={monthly.spent} whole className="text-lg font-semibold" />
+          </div>
+          <div>
+            <p className="label">{over ? "Over by" : "Left"}</p>
+            <Money value={monthly.remaining} whole className="text-lg font-semibold" style={{ color }} />
+          </div>
+          {isCurrent && summary.safe_to_spend_today !== null && (
+            <div className="hidden sm:block">
+              <p className="label">Safe today</p>
+              <Money value={summary.safe_to_spend_today} whole className="text-lg font-semibold text-accent-2" />
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="mt-4 flex items-center gap-3">
+        <ProgressBar percent={monthly.percent} status={monthly.status} className="flex-1" />
+        <span className="num text-xs font-semibold" style={{ color }}>
+          {monthly.percent}%
+        </span>
+      </div>
+      <p className="mt-2 text-xs text-muted">
+        {daily ? (
+          <>
+            Day colours compare each day with your <Money value={daily.limit} whole className="text-fg" /> daily limit
+          </>
+        ) : (
+          <>
+            Add a daily limit on{" "}
+            <Link href="/budgets" className="text-accent-2 hover:underline">
+              Budgets
+            </Link>{" "}
+            to colour days green / amber / red
+          </>
+        )}
+      </p>
+    </Card>
   );
 }
 

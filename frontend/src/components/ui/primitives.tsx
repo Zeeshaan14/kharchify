@@ -3,7 +3,7 @@
 import { clsx } from "clsx";
 import { Loader2 } from "lucide-react";
 import { animate, motion, useMotionValue, useTransform } from "motion/react";
-import { type ButtonHTMLAttributes, type ReactNode, useEffect, useId } from "react";
+import { type ButtonHTMLAttributes, type CSSProperties, type ReactNode, useEffect, useId } from "react";
 import { inrFmt } from "@/lib/format";
 import type { BudgetStatus } from "@/lib/types";
 
@@ -33,16 +33,18 @@ export function Money({
   className,
   whole = false,
   sign,
+  style,
 }: {
   value: string | number;
   className?: string;
   whole?: boolean;
   sign?: "-" | "+";
+  style?: CSSProperties;
 }) {
   const text = inrFmt(Math.abs(Number(value)), { whole }).replace("₹", "");
   const [rupees, paise] = text.split(".");
   return (
-    <span className={clsx("num whitespace-nowrap", className)}>
+    <span className={clsx("num whitespace-nowrap", className)} style={style}>
       {sign && <span className="opacity-60">{sign === "-" ? "−" : "+"}</span>}
       <span className="mr-[0.08em] text-[0.62em] font-medium opacity-50">₹</span>
       {rupees}
