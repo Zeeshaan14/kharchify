@@ -1,7 +1,7 @@
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.errors import ConflictError, NotFoundError
+from app.errors import BadRequestError, ConflictError, NotFoundError
 from app.models import Category, User
 from app.schemas import CategoryCreate, CategoryUpdate
 
@@ -18,6 +18,14 @@ def get_category(db: Session, user: User, category_id: int) -> Category:
     # Another user's category looks exactly like a missing one.
     if category is None or category.user_id != user.id:
         raise NotFoundError("Category not found")
+    return category
+
+
+def get_usable_category(db: Session, user: User, category_id: int) -> Category:
+    """A category that can receive new expenses or budgets (not archived)."""
+    category = get_category(db, user, category_id)
+    if category.is_archived:
+        raise BadRequestError(f"Category '{category.name}' is archived")
     return category
 
 

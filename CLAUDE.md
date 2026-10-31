@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Kharchify is a personal expense tracker (INR): log expenses by category, set daily/monthly budgets, see where money goes. Used on laptop and iPhone, so all data lives on the backend. Agreed design, decisions and roadmap: @docs/ARCHITECTURE.md
 
 ## Layout
-- `backend/` — FastAPI + SQLAlchemy 2.0 + Alembic. SQLite in dev, PostgreSQL planned for deployment.
+- `backend/` — FastAPI + SQLAlchemy 2.0 + Alembic. SQLite by default in dev, Neon PostgreSQL in production.
 - `frontend/` — not built yet. Planned: Next.js (App Router) + TypeScript, Tailwind, Recharts, installable as a PWA (no separate native app). Next.js is UI only: all data goes through the FastAPI API — no Next.js API routes or direct DB access.
 - `docs/iphone-shortcut.md` — user guide for the iPhone Shortcut (iOS 27) that calls `POST /expenses` with an API token, sending `amount` and `category_id` as JSON strings and showing the response's `message`. Category ids are hard-coded in the Shortcut, so changing ids or that request/response shape breaks it — keep the guide in sync.
 
@@ -41,6 +41,7 @@ Kharchify is a personal expense tracker (INR): log expenses by category, set dai
 - `POST /auth/login` is an OAuth2 form: the email goes in the `username` field.
 
 ## Gotchas
+- The owner's local `backend/.env` may point `DATABASE_URL` at the **production** Neon DB (check the host before anything that writes: dev server, `alembic upgrade/downgrade`, scripts). Tests are unaffected (in-memory SQLite).
 - The repo is inside OneDrive; files (e.g. `kharchify.db`) can be locked while syncing, so deletes may fail with "resource busy".
 - `.venv/Scripts/python.exe` is a launcher that spawns the real interpreter as a child, so `kill $!` leaves the server running. Stop a test server by the PID listening on its port (check its command line first) — never kill all `python.exe`/`node.exe`.
 - Use `set -o pipefail` when piping commands through `tail`/`grep` in `&&` chains, or failures are hidden.

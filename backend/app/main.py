@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 
 from app.config import settings
 from app.errors import AppError
-from app.routers import auth, categories, expenses, tokens
+from app.routers import auth, budgets, categories, dashboard, expenses, tokens
 
 app = FastAPI(title="Kharchify API")
 
@@ -25,6 +25,8 @@ def handle_app_error(_request: Request, exc: AppError):
 app.include_router(auth.router)
 app.include_router(categories.router)
 app.include_router(expenses.router)
+app.include_router(budgets.router)
+app.include_router(dashboard.router)
 app.include_router(tokens.router)
 
 

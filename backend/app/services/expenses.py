@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.errors import BadRequestError, NotFoundError
 from app.models import Expense, User
 from app.schemas import ExpenseCreate, ExpenseUpdate
-from app.services.categories import get_category
+from app.services.categories import get_usable_category
 
 # Columns that may not be set to null on update.
 REQUIRED_FIELDS = ("amount", "category_id", "spent_on", "payment_method")
@@ -32,11 +32,12 @@ def format_inr(amount: Decimal) -> str:
     return f"₹{grouped}" if paise == "00" else f"₹{grouped}.{paise}"
 
 
-def _usable_category_id(db: Session, user: User, category_id: int) -> int:
-    category = get_category(db, user, category_id)
-    if category.is_archived:
-        raise BadRequestError(f"Category '{category.name}' is archived")
-    return category.id
+def total_spent(db: Session, user: User, start: date, end: date, category_id: int | None = None) -> Decimal:
+    """Sum of expenses dated start..end (inclusive), optionally for one category."""
+    query = select(func.sum(Expense.amount)).where(Expense.user_id == user.id, Expense.spent_on.between(start, end))
+    if category_id is not None:
+        query = query.where(Expense.category_id == category_id)
+    return db.scalar(query) or Decimal(0)
 
 
 def get_expense(db: Session, user: User, expense_id: int) -> Expense:
@@ -49,7 +50,7 @@ def get_expense(db: Session, user: User, expense_id: int) -> Expense:
 def create_expense(db: Session, user: User, data: ExpenseCreate) -> Expense:
     expense = Expense(
         user_id=user.id,
-        category_id=_usable_category_id(db, user, data.category_id),
+        category_id=get_usable_category(db, user, data.category_id).id,
         amount=data.amount,
         spent_on=data.spent_on or today_for(user),
         payment_method=data.payment_method,
@@ -105,7 +106,7 @@ def update_expense(db: Session, user: User, expense_id: int, data: ExpenseUpdate
         if field in changes and changes[field] is None:
             raise BadRequestError(f"'{field}' cannot be empty")
     if "category_id" in changes and changes["category_id"] != expense.category_id:
-        changes["category_id"] = _usable_category_id(db, user, changes["category_id"])
+        changes["category_id"] = get_usable_category(db, user, changes["category_id"]).id
 
     for field, value in changes.items():
         setattr(expense, field, value)

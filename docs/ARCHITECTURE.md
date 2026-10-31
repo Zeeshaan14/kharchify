@@ -47,19 +47,20 @@ Rules: money is `Decimal`, never `float`. Categories with expenses are archived,
 | Module | Endpoints | Phase |
 |---|---|---|
 | auth | `POST /auth/register`, `POST /auth/login`, `GET /auth/me` | 1 ✅ |
-| categories | `GET /categories`, `POST /categories`, `PATCH /categories/{id}` | 2 |
-| expenses | `GET /expenses` (filters + pagination), `POST`, `GET/PATCH/DELETE /expenses/{id}` | 2 |
-| tokens | `GET /tokens`, `POST /tokens`, `DELETE /tokens/{id}` | 2 |
-| budgets | CRUD | 3 |
-| dashboard | `GET /dashboard/summary?month=YYYY-MM` | 3 |
+| categories | `GET /categories`, `POST /categories`, `PATCH /categories/{id}` | 2 ✅ |
+| expenses | `GET /expenses` (filters + pagination), `POST`, `GET/PATCH/DELETE /expenses/{id}` | 2 ✅ |
+| tokens | `GET /tokens`, `POST /tokens`, `DELETE /tokens/{id}` | 2 ✅ |
+| budgets | `GET /budgets` (with progress), `POST`, `PATCH/DELETE /budgets/{id}` | 3 ✅ |
+| dashboard | `GET /dashboard/summary?month=YYYY-MM` | 3 ✅ |
 | recurring, insights, export | | 5–6 |
 
 ## Budgets & dashboard (Phase 3)
-- Monthly: spent from the 1st through today vs limit. Daily: today vs limit.
-- **Safe to spend today** = (monthly budget − spent this month) ÷ days left including today.
-- Status: green < 80%, yellow 80–100%, red > 100%.
-- Dashboard = one call: today, month total, remaining, safe-to-spend, by-category breakdown, top 5 expenses, daily trend. Computed with SQL aggregates.
-- `POST /expenses` will then also return budget-left info for the Shortcut notification.
+- Budgets: `daily` or `monthly`, overall (`category_id` null) or per category; at most one per period + category (checked in the service — SQL unique constraints ignore NULLs).
+- Monthly: everything dated in the calendar month vs limit. Daily: today vs limit.
+- **Safe to spend today** = (overall monthly budget − spent before today) ÷ days left including today − spent today, floored at 0. Only for the current month.
+- Status: `ok` (green) < 80%, `warning` (yellow) 80–100%, `over` (red) > 100%.
+- Dashboard = one call: today + daily budget, month total + monthly budget, safe-to-spend, by-category breakdown (with category budgets), top 5 expenses, zero-filled daily trend. Computed with SQL aggregates.
+- `POST /expenses` message adds budget left, e.g. `✅ ₹250 added to Food · ₹3,200 left this month` (overall monthly budget, else the category's).
 
 ## Recurring expenses (Phase 5)
 No background scheduler (serverless functions only run per request). Due items are created on demand ("catch-up") when the user next hits the API.
@@ -67,7 +68,7 @@ No background scheduler (serverless functions only run per request). Due items a
 ## Roadmap
 1. ✅ Backend base + login
 2. ✅ Categories, expenses, API tokens, iPhone Shortcut guide; Vercel + Neon deploy setup
-3. Budgets + dashboard API
+3. ✅ Budgets + dashboard API
 4. Next.js frontend (TanStack Query, Tailwind, Recharts; mobile-first, bottom nav, floating "+ Add")
 5. Frontend deploy (Vercel), PWA, recurring expenses
 6. Insights, alerts, savings goals, CSV export

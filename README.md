@@ -18,7 +18,7 @@ Open http://localhost:8000/docs to try the API. Run tests with `.venv/Scripts/py
 ## Roadmap
 1. ✅ Backend basics — models, login
 2. ✅ Categories + expenses API, personal API tokens, iPhone Shortcut ([guide](docs/iphone-shortcut.md)), Vercel deploy setup ([guide](docs/DEPLOY.md))
-3. Budgets + dashboard API — daily/monthly limits, safe-to-spend, category breakdown, trends
+3. ✅ Budgets + dashboard API — daily/monthly limits, safe-to-spend, category breakdown, trends
 4. Next.js frontend — login, quick-add, expense list, dashboard
 5. Frontend deploy + PWA + recurring expenses
 6. Insights, alerts, savings goals, CSV export

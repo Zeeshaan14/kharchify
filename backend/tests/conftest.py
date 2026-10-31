@@ -1,3 +1,5 @@
+from datetime import date
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -53,3 +55,33 @@ def other_headers(client):
 def food_id(client, auth_headers):
     categories = client.get("/categories", headers=auth_headers).json()
     return next(c["id"] for c in categories if c["name"] == "Food")
+
+
+# --- budgets / dashboard ---
+
+TODAY = date(2026, 10, 11)
+
+
+@pytest.fixture
+def frozen_today(monkeypatch):
+    """Pins "today" to TODAY so date-based money math is checkable."""
+    for module in ("app.services.expenses", "app.services.budgets", "app.services.dashboard", "app.routers.budgets"):
+        monkeypatch.setattr(f"{module}.today_for", lambda user: TODAY)
+
+
+def category_id(client, headers, name):
+    return next(c["id"] for c in client.get("/categories", headers=headers).json() if c["name"] == name)
+
+
+def add_budget(client, headers, **body):
+    res = client.post("/budgets", json=body, headers=headers)
+    assert res.status_code == 201, res.text
+    return res.json()
+
+
+def add_expense(client, headers, category_id, amount, spent_on=TODAY.isoformat()):
+    res = client.post(
+        "/expenses", json={"amount": amount, "category_id": category_id, "spent_on": spent_on}, headers=headers
+    )
+    assert res.status_code == 201, res.text
+    return res.json()

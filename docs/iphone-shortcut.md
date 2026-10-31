@@ -5,6 +5,7 @@ After you leave Google Pay, your iPhone asks how much you spent and the category
 ```
 Close Google Pay → number pad: 250 → pick 🍔 food → alert: "✅ ₹250 added to Food"
 ```
+With a monthly budget set (`POST /budgets`), the alert also says what's left: `✅ ₹250 added to Food · ₹3,200 left this month`.
 Didn't pay anything? Tap **Cancel** on the amount prompt — nothing is sent.
 
 Written for **iOS 27** (no *Ask for Input* action; *Choose from List* on a dictionary returns the **value**, not the key). Needs the backend deployed ([DEPLOY.md](DEPLOY.md)) — API URL `https://<your-project>.vercel.app`.
@@ -13,7 +14,7 @@ Written for **iOS 27** (no *Ask for Input* action; *Choose from List* on a dicti
 
 ## Step 1 — Create a personal API token
 
-Use the **live** docs page, `https://<your-project>.vercel.app/docs` — not `http://127.0.0.1:8000/docs`. A token or category id made on your laptop doesn't exist on the live server.
+Use the **live** docs page, `https://<your-project>.vercel.app/docs`. A token or category id made on a laptop server with its own database (e.g. the default SQLite) doesn't exist on the live server.
 
 1. **POST /auth/register** (first time only) → *Try it out* → your email, name, password.
 2. Click **Authorize** (top right) → email in *username*, your password → Authorize.

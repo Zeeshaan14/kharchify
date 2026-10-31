@@ -6,6 +6,7 @@ from fastapi import APIRouter, Query, Response, status
 from app.deps import CurrentUser, DbSession
 from app.schemas import ExpenseCreate, ExpenseCreated, ExpenseOut, ExpensePage, ExpenseUpdate, PaymentMethod
 from app.services import expenses as service
+from app.services.budgets import month_left_note
 
 router = APIRouter(prefix="/expenses", tags=["expenses"])
 
@@ -40,6 +41,8 @@ def list_expenses(
 def create_expense(payload: ExpenseCreate, db: DbSession, user: CurrentUser):
     expense = service.create_expense(db, user, payload)
     message = f"✅ {service.format_inr(expense.amount)} added to {expense.category.name}"
+    if note := month_left_note(db, user, expense.category):
+        message += f" · {note}"
     return ExpenseCreated(**ExpenseOut.model_validate(expense).model_dump(), message=message)
 
 
