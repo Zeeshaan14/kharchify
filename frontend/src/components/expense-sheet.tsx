@@ -4,7 +4,7 @@ import { clsx } from "clsx";
 import { format, subDays } from "date-fns";
 import { ChevronDown, Delete, Trash2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { createContext, type FormEvent, type ReactNode, useCallback, useContext, useState, useSyncExternalStore } from "react";
+import { createContext, type FormEvent, type ReactNode, useCallback, useContext, useEffect, useState, useSyncExternalStore } from "react";
 import { useCategoryLookup } from "@/lib/categories";
 import { PAYMENT_LABELS } from "@/lib/format";
 import { useCategories, useDeleteExpense, useSaveExpense } from "@/lib/queries";
@@ -23,7 +23,17 @@ const ExpenseSheetContext = createContext<{ openNew: (date?: string) => void; op
 export const useExpenseSheet = () => useContext(ExpenseSheetContext);
 
 export function ExpenseSheetProvider({ children }: { children: ReactNode }) {
-  const [target, setTarget] = useState<Target>(null);
+  // "/?add=1" (the app shortcut) opens straight into a new expense.
+  const [target, setTarget] = useState<Target>(() =>
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).has("add") ? {} : null,
+  );
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("add")) {
+      url.searchParams.delete("add");
+      window.history.replaceState(null, "", url);
+    }
+  }, []);
   const openNew = useCallback((date?: string) => setTarget({ date }), []);
   const openEdit = useCallback((expense: Expense) => setTarget({ expense }), []);
   const close = useCallback(() => setTarget(null), []);

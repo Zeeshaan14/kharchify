@@ -16,6 +16,7 @@ Kharchify is a personal expense tracker (INR): log expenses by category, set dai
 - Vercel runs Python 3.12+; the venv is 3.13 (`backend/.python-version`). Don't use 3.11-only or 3.14-only features.
 - `DATABASE_URL` from hosts (`postgres://…`) is rewritten to `postgresql+psycopg://…` in `app/config.py`.
 - `ALLOW_REGISTRATION=false` in production after the owner's account exists.
+- Web app: a second Vercel project (root `frontend/`, env `NEXT_PUBLIC_API_URL` = backend URL, baked in at build). The backend's `CORS_ORIGINS` must list the web app's URL. Installable PWA via `src/app/manifest.ts` + icons (`src/app/icon.png`, `apple-icon.png`, `public/icon-*.png`).
 
 ## Environment rules (strict)
 - **Never install anything globally.** Python packages go only into `backend/.venv`; always invoke tools through it: `.venv/Scripts/python -m pip|pytest|alembic|uvicorn ...` (Windows venv layout — `Scripts/`, not `bin/`). Don't rely on an activated shell.

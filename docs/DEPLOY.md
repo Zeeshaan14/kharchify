@@ -40,9 +40,27 @@ iPhone Shortcut / browser ──HTTPS──▶ Vercel (FastAPI function, Singapo
 ## 5. Connect the iPhone Shortcut
 Follow [iphone-shortcut.md](iphone-shortcut.md), with `https://<your-url>` as the API URL. Works on Wi-Fi and mobile data.
 
+## 6. Deploy the web app (second Vercel project)
+The same repo holds both apps; the web app is its own Vercel project with root `frontend`.
+1. Vercel → **Add New… → Project** → import `kharchify` **again**.
+2. **Project Name** e.g. `kharchify-app` (gives `https://kharchify-app.vercel.app`).
+3. **Root Directory** → `frontend`. Framework: **Next.js** (auto-detected).
+4. **Environment Variables:** `NEXT_PUBLIC_API_URL` = `https://<your-api-url>` (the backend URL, no trailing slash).
+5. **Deploy.**
+6. Allow the web app to call the API — in the **backend** project: **Settings → Environment Variables** →
+   `CORS_ORIGINS` = `["https://kharchify-app.vercel.app","http://localhost:3000"]` (JSON list, your real web-app URL) → Save → **Redeploy** the backend.
+7. Open the web app URL and sign in.
+
+Optional: the login lasts `ACCESS_TOKEN_EXPIRE_MINUTES` (default 10080 = 7 days). For fewer re-logins on your phone set it to e.g. `43200` (30 days) in the backend project and redeploy.
+
+Both projects redeploy on every push. To skip a project's build when only the other folder changed: project → **Settings → Build and Deployment → Ignored Build Step** → "Only build if there are changes in a folder" (its root directory).
+
+## 7. Install on iPhone
+Open the web app in **Safari** → **Share** → **Add to Home Screen** → **Add**. It opens full-screen like an app. Sign in once inside it (the home-screen app keeps its own login, separate from Safari).
+
 ## Notes
 - **Use the production URL** (`<project>.vercel.app`). Preview URLs (per branch/commit) are login-protected by Vercel and use the same database without migrating it.
 - **Logs / errors:** project → **Logs** (runtime) or the deployment's **Build Logs**.
 - **Database viewer:** Storage tab → Neon → **Open in Neon Console** → **Tables**.
 - **Free limits:** Hobby plan is for personal, non-commercial use; Neon free gives 0.5 GB — years of expenses.
-- **Your laptop still uses SQLite** — local and hosted data are separate.
+- **Laptop data:** with no `DATABASE_URL` in `backend/.env` the laptop uses its own SQLite file; if `.env` points at the Neon URL, the laptop works on your **live** data.
