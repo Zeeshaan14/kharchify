@@ -30,8 +30,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               initial={{ opacity: 0, y: -16, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -16, scale: 0.95 }}
-              className={`pointer-events-auto max-w-md rounded-2xl border px-4 py-3 text-sm font-medium shadow-2xl backdrop-blur-xl ${
-                t.tone === "ok" ? "border-line bg-surface-2/90 text-fg" : "border-bad/30 bg-bad/15 text-bad"
+              className={`pointer-events-auto max-w-md rounded-2xl border px-4 py-3 text-sm font-medium shadow-2xl ${
+                t.tone === "ok" ? "border-line bg-surface text-fg" : "border-bad/30 bg-bad/15 text-bad"
               }`}
             >
               {t.text}

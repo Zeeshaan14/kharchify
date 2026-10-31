@@ -118,7 +118,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       {/* Phone: floating glass bar with a glowing add button */}
       <nav className="fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(0.9rem,env(safe-area-inset-bottom))] lg:hidden">
-        <div className="glass relative mx-auto flex max-w-md items-center justify-between rounded-[1.75rem] px-2 py-2 !bg-[color-mix(in_oklab,var(--bg)_70%,transparent)]">
+        <div className="glass glass-blur relative mx-auto flex max-w-md items-center justify-between rounded-[1.75rem] px-2 py-2 !bg-[color-mix(in_oklab,var(--bg)_70%,transparent)]">
           {NAV.slice(0, 2).map((item) => (
             <BottomLink key={item.href} {...item} active={isActive(item.href)} />
           ))}

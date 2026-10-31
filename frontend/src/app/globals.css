@@ -7,7 +7,7 @@
 :root,
 [data-theme="dark"] {
   --bg: #050507;
-  --glass: rgb(255 255 255 / 0.035);
+  --glass: rgb(255 255 255 / 0.045);
   --glass-strong: rgb(255 255 255 / 0.06);
   --glass-border: rgb(255 255 255 / 0.08);
   --glass-highlight: rgb(255 255 255 / 0.14);
@@ -32,7 +32,7 @@
 
 [data-theme="light"] {
   --bg: #eef0f6;
-  --glass: rgb(255 255 255 / 0.62);
+  --glass: rgb(255 255 255 / 0.72);
   --glass-strong: rgb(255 255 255 / 0.8);
   --glass-border: rgb(15 15 40 / 0.07);
   --glass-highlight: rgb(255 255 255 / 0.9);
@@ -91,8 +91,7 @@ body {
 /* Fixed aurora behind everything; cards blur it. */
 .aurora {
   position: fixed;
-  inset: 0 0 auto 0;
-  height: 100lvh;
+  inset: -15vh 0;
   z-index: -1;
   pointer-events: none;
   background:
@@ -125,13 +124,13 @@ body {
   pointer-events: none;
 }
 
-/* Frosted glass card with a light top edge. */
+/* Glass card with a light top edge. No backdrop-filter here: on iOS Safari, a backdrop-filter
+   inside an animated (transformed/faded) ancestor renders as a black box. The aurora behind is a
+   smooth glow anyway, so a translucent fill looks the same. */
 .glass {
   position: relative;
   background: var(--glass);
   border: 1px solid var(--glass-border);
-  backdrop-filter: blur(24px) saturate(140%);
-  -webkit-backdrop-filter: blur(24px) saturate(140%);
   box-shadow:
     inset 0 1px 0 0 var(--glass-highlight),
     0 20px 50px -30px rgb(0 0 0 / 0.6);
@@ -140,6 +139,12 @@ body {
   box-shadow:
     inset 0 1px 0 0 var(--glass-highlight),
     0 20px 40px -28px rgb(40 30 90 / 0.25);
+}
+
+/* Real frosted blur, only for fixed UI that is never inside an animated wrapper (bottom bar). */
+.glass-blur {
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
 }
 
 /* Violet → cyan accent text */
