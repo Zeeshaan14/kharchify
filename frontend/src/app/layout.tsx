@@ -16,6 +16,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // Stops iOS auto-zooming into form fields (and staying zoomed after login); iOS still allows pinch-zoom.
+  maximumScale: 1,
   viewportFit: "cover",
   themeColor: "#050507",
 };
