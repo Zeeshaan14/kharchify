@@ -75,7 +75,7 @@ export default function CalendarPage() {
       {summary && <BudgetBanner summary={summary} isCurrent={isCurrent} />}
 
       <div className="mb-4 grid grid-cols-3 gap-3">
-        <Stat icon={<Sparkles className="size-4 text-good" />} label="No-spend days" value={String(noSpendDays)} />
+        <Stat icon={<Sparkles className="size-4 text-good" />} label="No-spend days" value={String(noSpendDays)} hint="days with ₹0 spent" />
         <Stat
           icon={<Flame className="size-4 text-bad" />}
           label="Biggest day"
