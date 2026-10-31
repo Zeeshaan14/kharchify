@@ -26,9 +26,11 @@ export default function BudgetsPage() {
       <PageHeader
         title="Budgets"
         subtitle="Limits that keep you honest"
+        inline
         action={
-          <Button onClick={() => setEditing("new")} className="h-10">
-            <Plus className="size-4" /> <span className="hidden sm:inline">New budget</span>
+          // A labelled pill, so it doesn't read as a second "add expense" button.
+          <Button onClick={() => setEditing("new")} className="h-9 rounded-full px-3.5 text-xs sm:h-10 sm:px-4 sm:text-sm">
+            <Plus className="size-4" /> New<span className="hidden sm:inline"> budget</span>
           </Button>
         }
       />
@@ -73,6 +75,17 @@ export default function BudgetsPage() {
               </Card>
             </section>
           )}
+          {/* End of the list: the natural thumb spot on a phone after scrolling. */}
+          <button
+            onClick={() => setEditing("new")}
+            className="flex w-full items-center justify-center gap-2 rounded-[1.75rem] border border-dashed border-line py-5 text-sm font-medium text-muted transition hover:border-accent/50 hover:text-fg active:scale-[0.99]"
+          >
+            <span className="grid size-8 place-items-center rounded-full bg-accent-soft text-accent">
+              <Plus className="size-4" />
+            </span>
+            Add a budget
+            <span className="hidden text-xs text-faint sm:inline">· daily, monthly or per category</span>
+          </button>
         </div>
       )}
 
