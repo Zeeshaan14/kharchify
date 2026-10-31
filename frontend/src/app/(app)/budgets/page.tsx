@@ -10,6 +10,7 @@ import { Sheet } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
 import { useCategoryLookup } from "@/lib/categories";
 import { useBudgets, useCategories, useDeleteBudget, useSaveBudget } from "@/lib/queries";
+import { useCoarsePointer } from "@/lib/use-coarse-pointer";
 import type { Budget, BudgetPeriod } from "@/lib/types";
 
 const STATUS_TEXT = { ok: "On track", warning: "Getting close", over: "Over budget" } as const;
@@ -152,6 +153,8 @@ function BudgetForm({ budget, existing, onDone }: { budget: Budget | null; exist
   const save = useSaveBudget();
   const remove = useDeleteBudget();
   const { data: categories = [] } = useCategories();
+  // On phones the keyboard should only open when the amount field is tapped.
+  const touch = useCoarsePointer();
   const [period, setPeriod] = useState<BudgetPeriod>(budget?.period ?? "monthly");
   const [categoryId, setCategoryId] = useState<number | null>(budget?.category?.id ?? null);
   const [amount, setAmount] = useState(budget ? String(Number(budget.amount)) : "");
@@ -198,7 +201,7 @@ function BudgetForm({ budget, existing, onDone }: { budget: Budget | null; exist
       <label className="flex items-baseline justify-center gap-1 rounded-3xl bg-surface-2 py-6">
         <span className="text-3xl font-medium text-muted">₹</span>
         <input
-          autoFocus
+          autoFocus={!touch}
           inputMode="decimal"
           placeholder="0"
           value={amount}

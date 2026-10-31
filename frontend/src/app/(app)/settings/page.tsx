@@ -11,6 +11,7 @@ import { useToast } from "@/components/ui/toast";
 import { logout } from "@/lib/api";
 import { CATEGORY_COLORS } from "@/lib/categories";
 import { useCategories, useCreateToken, useMe, useRevokeToken, useSaveCategory, useTokens } from "@/lib/queries";
+import { useCoarsePointer } from "@/lib/use-coarse-pointer";
 import type { Category } from "@/lib/types";
 
 export default function SettingsPage() {
@@ -112,6 +113,7 @@ function CategoryItem({ category, onClick }: { category: Category; onClick: () =
 function CategoryForm({ category, onDone }: { category: Category | null; onDone: () => void }) {
   const toast = useToast();
   const save = useSaveCategory();
+  const touch = useCoarsePointer();
   const [name, setName] = useState(category?.name ?? "");
   const [icon, setIcon] = useState(category?.icon ?? "");
   const [color, setColor] = useState(category?.color ?? CATEGORY_COLORS[0]);
@@ -134,7 +136,7 @@ function CategoryForm({ category, onDone }: { category: Category | null; onDone:
       <div className="flex items-center gap-3">
         <CategoryBadge icon={icon || null} color={color} size="lg" />
         <input value={icon} onChange={(e) => setIcon(e.target.value)} maxLength={16} placeholder="🍕" className={clsx(inputClass, "w-20 text-center text-lg")} aria-label="Emoji" />
-        <input value={name} onChange={(e) => setName(e.target.value)} maxLength={50} required placeholder="Name" className={inputClass} autoFocus={!category} />
+        <input value={name} onChange={(e) => setName(e.target.value)} maxLength={50} required placeholder="Name" className={inputClass} autoFocus={!category && !touch} />
       </div>
       <div className="flex flex-wrap gap-2">
         {CATEGORY_COLORS.map((c) => (

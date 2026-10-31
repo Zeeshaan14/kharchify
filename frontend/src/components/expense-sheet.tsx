@@ -4,10 +4,11 @@ import { clsx } from "clsx";
 import { format, subDays } from "date-fns";
 import { ChevronDown, Delete, Trash2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { createContext, type FormEvent, type ReactNode, useCallback, useContext, useEffect, useState, useSyncExternalStore } from "react";
+import { createContext, type FormEvent, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
 import { useCategoryLookup } from "@/lib/categories";
 import { PAYMENT_LABELS } from "@/lib/format";
 import { useCategories, useDeleteExpense, useSaveExpense } from "@/lib/queries";
+import { useCoarsePointer } from "@/lib/use-coarse-pointer";
 import type { Expense, ExpenseCreated, PaymentMethod } from "@/lib/types";
 import { Button, CategoryBadge, ErrorNote, inputClass, Segmented } from "./ui/primitives";
 import { Sheet } from "./ui/sheet";
@@ -52,22 +53,10 @@ export function ExpenseSheetProvider({ children }: { children: ReactNode }) {
 const iso = (d: Date) => format(d, "yyyy-MM-dd");
 const AMOUNT_RE = /^\d{0,10}(\.\d{0,2})?$/;
 
-/** Touch screens get the built-in keypad instead of the system keyboard. */
-function useCoarsePointer() {
-  return useSyncExternalStore(
-    (onChange) => {
-      const mq = window.matchMedia("(pointer: coarse)");
-      mq.addEventListener("change", onChange);
-      return () => mq.removeEventListener("change", onChange);
-    },
-    () => window.matchMedia("(pointer: coarse)").matches,
-    () => false,
-  );
-}
-
 function ExpenseForm({ target, onDone }: { target: NonNullable<Target>; onDone: () => void }) {
   const editing = target.expense;
   const toast = useToast();
+  // Touch screens get the built-in keypad instead of the system keyboard.
   const touch = useCoarsePointer();
   const { data: categories = [] } = useCategories();
   const lookup = useCategoryLookup();
