@@ -69,7 +69,7 @@ No background scheduler (serverless functions only run per request). Due items a
 1. ✅ Backend base + login
 2. ✅ Categories, expenses, API tokens, iPhone Shortcut guide; Vercel + Neon deploy setup
 3. ✅ Budgets + dashboard API
-4. Next.js frontend (TanStack Query, Tailwind, Recharts; mobile-first, bottom nav, floating "+ Add")
+4. ✅ Next.js frontend (TanStack Query, Tailwind, Recharts; mobile-first, bottom nav, floating "+ Add"; overview, calendar heat-map, expenses, budgets, settings)
 5. Frontend deploy (Vercel), PWA, recurring expenses
 6. Insights, alerts, savings goals, CSV export
 7. (Maybe) bank statement upload

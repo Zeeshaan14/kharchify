@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+/* Theme is a data attribute on <html>, set before paint by the inline script in layout.tsx. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root,
+[data-theme="dark"] {
+  --bg: #09090d;
+  --surface: #121219;
+  --surface-2: #1a1a23;
+  --surface-3: #23232e;
+  --border: rgb(255 255 255 / 0.07);
+  --text: #ededf2;
+  --muted: #8a8a9b;
+  --faint: #55556a;
+  --accent: #8b7cff;
+  --accent-soft: rgb(139 124 255 / 0.14);
+  --good: #34d399;
+  --warn: #fbbf24;
+  --bad: #f87171;
+  --glow: rgb(139 124 255 / 0.22);
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  --bg: #f5f5f8;
+  --surface: #ffffff;
+  --surface-2: #f0f0f5;
+  --surface-3: #e6e6ee;
+  --border: rgb(15 15 35 / 0.08);
+  --text: #15151d;
+  --muted: #6b6b7d;
+  --faint: #a4a4b5;
+  --accent: #6d5bf5;
+  --accent-soft: rgb(109 91 245 / 0.1);
+  --good: #10b981;
+  --warn: #d97706;
+  --bad: #ef4444;
+  --glow: rgb(109 91 245 / 0.14);
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--border);
+  --color-fg: var(--text);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-good: var(--good);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  background: var(--bg);
+}
+
+body {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, var(--glow), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
+  color: var(--text);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Money lines up in columns. */
+.num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+/* Recharts focus outline on click */
+.recharts-wrapper *:focus {
+  outline: none;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.5);
+}

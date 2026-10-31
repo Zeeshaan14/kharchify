@@ -6,7 +6,7 @@ Kharchify is a personal expense tracker (INR): log expenses by category, set dai
 
 ## Layout
 - `backend/` — FastAPI + SQLAlchemy 2.0 + Alembic. SQLite by default in dev, Neon PostgreSQL in production.
-- `frontend/` — not built yet. Planned: Next.js (App Router) + TypeScript, Tailwind, Recharts, installable as a PWA (no separate native app). Next.js is UI only: all data goes through the FastAPI API — no Next.js API routes or direct DB access.
+- `frontend/` — Next.js 16 (App Router) + TypeScript, Tailwind v4, TanStack Query, Recharts, Motion. Next.js is UI only: all data goes through the FastAPI API — no Next.js API routes or direct DB access. Client-rendered (login JWT in localStorage), so pages are `"use client"`; server caching features are off. Next 16 differs from older versions — check `frontend/node_modules/next/dist/docs/` (see `frontend/AGENTS.md`). Money math stays in the API; the frontend only formats (`src/lib/format.ts`).
 - `docs/iphone-shortcut.md` — user guide for the iPhone Shortcut (iOS 27) that calls `POST /expenses` with an API token, sending `amount` and `category_id` as JSON strings and showing the response's `message`. Category ids are hard-coded in the Shortcut, so changing ids or that request/response shape breaks it — keep the guide in sync.
 
 ## Deployment
@@ -22,9 +22,11 @@ Kharchify is a personal expense tracker (INR): log expenses by category, set dai
 - Frontend: local `npm install` only — no `npm install -g`, no globally installed CLIs.
 - Runtime deps go in `backend/requirements.txt` (deployed); test-only deps in `backend/requirements-dev.txt`. Install locally with `-r requirements-dev.txt`.
 
-## Commands (run from `backend/`)
+## Commands (backend: run from `backend/`)
 - Dev server: `.venv/Scripts/python -m uvicorn app.main:app --reload` → API docs at http://localhost:8000/docs
 - Tests: `.venv/Scripts/python -m pytest -q` (single: `-k test_name`)
+- Frontend (from `frontend/`): `npm run dev` (port 3000, API URL from `.env.local` `NEXT_PUBLIC_API_URL`), `npm run build` (type-check), `npx eslint src`.
+- UI work without real data: run the backend with `DATABASE_URL=sqlite:///./kharchify.db` (env overrides `.env`), then `scripts/seed_demo.py` (refuses non-SQLite).
 - New migration after changing `app/models.py`: `.venv/Scripts/python -m alembic revision --autogenerate -m "msg"`, review the file, then `.venv/Scripts/python -m alembic upgrade head`; `alembic check` confirms models and migrations match.
 
 ## Conventions
