@@ -152,7 +152,39 @@ function BottomLink({ href, label, icon: Icon, active }: (typeof NAV)[number] & 
 }
 
 /** Page heading; on phones the settings link sits here since the bottom bar has no room. */
-export function PageHeader({ title, subtitle, action }: { title: string; subtitle?: ReactNode; action?: ReactNode }) {
+export function PageHeader({
+  title,
+  subtitle,
+  action,
+  inline = false,
+}: {
+  title: string;
+  subtitle?: ReactNode;
+  action?: ReactNode;
+  /** Keep the action beside the title on phones too (saves a row on content-first pages). */
+  inline?: boolean;
+}) {
+  const settingsLink = (className: string) => (
+    <Link href="/settings" className={clsx("size-10 shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2 hover:text-fg", className)} aria-label="Settings">
+      <Settings className="size-5" />
+    </Link>
+  );
+
+  if (inline) {
+    return (
+      <header className="mb-4 flex items-center justify-between gap-2 sm:mb-6 sm:items-end">
+        <div className="min-w-0">
+          {subtitle && <p className="label mb-1.5 hidden sm:block">{subtitle}</p>}
+          <h1 className="font-display truncate text-[1.7rem] font-semibold leading-tight tracking-tight sm:text-4xl">{title}</h1>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          {action}
+          {settingsLink("grid lg:hidden")}
+        </div>
+      </header>
+    );
+  }
+
   return (
     // Phones: title row (with settings), action on its own row. Wider: one row.
     <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
@@ -161,14 +193,10 @@ export function PageHeader({ title, subtitle, action }: { title: string; subtitl
           {subtitle && <p className="label mb-1.5">{subtitle}</p>}
           <h1 className="font-display text-[1.7rem] font-semibold leading-tight tracking-tight sm:truncate sm:text-4xl">{title}</h1>
         </div>
-        <Link href="/settings" className="grid size-10 shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2 hover:text-fg sm:hidden" aria-label="Settings">
-          <Settings className="size-5" />
-        </Link>
+        {settingsLink("grid sm:hidden")}
       </div>
       {action && <div className="flex shrink-0 items-center gap-1">{action}</div>}
-      <Link href="/settings" className="hidden size-10 shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2 hover:text-fg sm:grid lg:hidden" aria-label="Settings">
-        <Settings className="size-5" />
-      </Link>
+      {settingsLink("hidden sm:grid lg:hidden")}
     </header>
   );
 }

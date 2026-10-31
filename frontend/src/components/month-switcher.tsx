@@ -23,10 +23,11 @@ export function MonthSwitcher({ month, onChange }: { month: string; onChange: (m
       </IconButton>
       <button
         onClick={() => onChange(currentMonth())}
-        className="font-display min-w-32 px-1 text-center text-sm font-semibold"
+        className="font-display min-w-[4.5rem] px-1 text-center text-sm font-semibold sm:min-w-32"
         title="Back to this month"
       >
-        {monthLabel(month)}
+        <span className="sm:hidden">{format(parseISO(`${month}-01`), "MMM yyyy")}</span>
+        <span className="hidden sm:inline">{monthLabel(month)}</span>
       </button>
       <IconButton className="size-8" disabled={atLatest} onClick={() => onChange(shift(month, 1))} aria-label="Next month">
         <ChevronRight className="size-4" />

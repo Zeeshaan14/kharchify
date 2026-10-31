@@ -2,17 +2,17 @@
 
 import { clsx } from "clsx";
 import { eachDayOfInterval, endOfMonth, endOfWeek, format, isSameMonth, parseISO, startOfMonth, startOfWeek } from "date-fns";
-import { CalendarDays, Flame, PiggyBank, Plus, Sparkles, Target } from "lucide-react";
+import { CalendarDays, Flame, Plus, Sparkles, Target } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
 import { useExpenseSheet } from "@/components/expense-sheet";
 import { ExpenseRow } from "@/components/expense-row";
 import { MonthSwitcher, useMonth } from "@/components/month-switcher";
 import { Button, Card, EmptyState, ErrorNote, Money, ProgressBar, Skeleton, STATUS_COLOR } from "@/components/ui/primitives";
 import { useCategoryLookup } from "@/lib/categories";
-import { dayLabel, inrCompact, inrFmt, monthLabel } from "@/lib/format";
+import { dayLabel, inrCompact, monthLabel } from "@/lib/format";
 import { useDashboard, useExpensesBetween } from "@/lib/queries";
 import type { DashboardSummary, Expense } from "@/lib/types";
 
@@ -68,30 +68,30 @@ export default function CalendarPage() {
     };
   }
 
+  // On phones the day panel sits below the grid; bring it into view when a day is tapped.
+  const panelRef = useRef<HTMLDivElement>(null);
+  function pick(day: string) {
+    setSelected(day);
+    if (window.matchMedia("(max-width: 1023px)").matches) {
+      requestAnimationFrame(() => panelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }));
+    }
+  }
+
   return (
     <>
-      <PageHeader title="Calendar" subtitle="Your spending, day by day" action={<MonthSwitcher month={month} onChange={setMonth} />} />
+      <PageHeader title="Calendar" subtitle="Your spending, day by day" inline action={<MonthSwitcher month={month} onChange={setMonth} />} />
       <ErrorNote error={error} />
-      {summary && <BudgetBanner summary={summary} isCurrent={isCurrent} />}
 
-      <div className="mb-4 grid grid-cols-3 gap-3">
-        <Stat icon={<Sparkles className="size-4 text-good" />} label="No-spend days" value={String(noSpendDays)} hint="days with ₹0 spent" />
-        <Stat
-          icon={<Flame className="size-4 text-bad" />}
-          label="Biggest day"
-          value={biggest ? inrCompact(biggest[1]) : "—"}
-          hint={biggest ? dayLabel(biggest[0], "d MMM") : undefined}
-        />
-        <Stat
-          icon={<CalendarDays className="size-4 text-warn" />}
-          label="Over daily limit"
-          value={overDays === null ? "—" : String(overDays)}
-          hint={overDays === null ? "no limit set" : "days"}
-        />
-      </div>
+      {/*
+        Phone: budget strip → calendar → selected day → stats (calendar is on the first screen).
+        Desktop: calendar on the left; budget, selected day and stats stacked on the right.
+      */}
+      <div className="grid gap-3 sm:gap-4 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+        <div className="lg:col-start-2 lg:row-start-1">
+          {summary ? <BudgetStrip summary={summary} isCurrent={isCurrent} /> : <Skeleton className="h-24" />}
+        </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-        <Card className="p-3 sm:p-5">
+        <Card className="p-3 sm:p-5 lg:col-start-1 lg:row-span-3 lg:row-start-1">
           {isPending ? (
             <Skeleton className="h-96" />
           ) : (
@@ -112,7 +112,7 @@ export default function CalendarPage() {
                     <button
                       key={key}
                       disabled={!inMonth}
-                      onClick={() => setSelected(key)}
+                      onClick={() => pick(key)}
                       className={clsx(
                         "relative flex aspect-square flex-col rounded-xl p-1.5 text-left transition sm:rounded-2xl sm:p-2",
                         !inMonth && "invisible",
@@ -143,68 +143,83 @@ export default function CalendarPage() {
           )}
         </Card>
 
-        <Card className="lg:sticky lg:top-8 lg:self-start">
-          <AnimatePresence mode="wait">
-            {selectedDay ? (
-              <motion.div key={selectedDay} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
-                <div className="mb-4 flex items-start justify-between gap-2">
-                  <div>
-                    <p className="text-sm text-muted">{dayLabel(selectedDay, "EEEE")}</p>
-                    <p className="text-lg font-semibold">{dayLabel(selectedDay, "d MMMM")}</p>
+        <div ref={panelRef} className="scroll-mt-4 lg:col-start-2 lg:row-start-2">
+          <Card>
+            <AnimatePresence mode="wait">
+              {selectedDay ? (
+                <motion.div key={selectedDay} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
+                  <div className="mb-3 flex items-start justify-between gap-2">
+                    <div>
+                      <p className="label">{dayLabel(selectedDay, "EEEE")}</p>
+                      <p className="font-display text-lg font-semibold">{dayLabel(selectedDay, "d MMMM")}</p>
+                    </div>
+                    <div className="text-right">
+                      <Money value={totals.get(selectedDay) ?? 0} className="text-2xl font-semibold" />
+                      {limit !== null && selectedDay <= today && (
+                        <p className="text-xs text-muted">
+                          of <Money value={limit} whole /> limit
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="num text-2xl font-semibold">{inrFmt(totals.get(selectedDay) ?? 0)}</p>
-                    {limit !== null && selectedDay <= today && (
-                      <p className="text-xs text-muted">of {inrFmt(limit, { whole: true })} limit</p>
-                    )}
+                  <div className="-mx-2 max-h-[22rem] overflow-y-auto">
+                    {(byDay.get(selectedDay) ?? []).map((e) => (
+                      <ExpenseRow key={e.id} expense={e} />
+                    ))}
                   </div>
-                </div>
-                <div className="-mx-2">
-                  {(byDay.get(selectedDay) ?? []).map((e) => (
-                    <ExpenseRow key={e.id} expense={e} />
-                  ))}
-                </div>
-                {!byDay.get(selectedDay)?.length && (
-                  <EmptyState icon={<Sparkles className="size-5" />} title={selectedDay > today ? "Hasn't happened yet" : "No spending — nice!"} />
-                )}
-                {selectedDay <= today && (
-                  <Button variant="soft" className="mt-3 w-full" onClick={() => openNew(selectedDay)}>
-                    <Plus className="size-4" /> Add for this day
-                  </Button>
-                )}
-              </motion.div>
-            ) : (
-              <EmptyState icon={<CalendarDays className="size-5" />} title="Pick a day" hint="Tap any day to see what you spent." />
-            )}
-          </AnimatePresence>
-        </Card>
+                  {!byDay.get(selectedDay)?.length && (
+                    <EmptyState icon={<Sparkles className="size-5" />} title={selectedDay > today ? "Hasn't happened yet" : "No spending — nice!"} />
+                  )}
+                  {selectedDay <= today && (
+                    <Button variant="soft" className="mt-3 w-full" onClick={() => openNew(selectedDay)}>
+                      <Plus className="size-4" /> Add for this day
+                    </Button>
+                  )}
+                </motion.div>
+              ) : (
+                <EmptyState icon={<CalendarDays className="size-5" />} title="Pick a day" hint="Tap any day to see what you spent." />
+              )}
+            </AnimatePresence>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3 lg:col-start-2 lg:row-start-3">
+          <Stat icon={<Sparkles className="size-4 text-good" />} label="No-spend" value={String(noSpendDays)} hint="days with ₹0" />
+          <Stat
+            icon={<Flame className="size-4 text-bad" />}
+            label="Biggest day"
+            value={biggest ? inrCompact(biggest[1]) : "—"}
+            hint={biggest ? dayLabel(biggest[0], "d MMM") : undefined}
+          />
+          <Stat
+            icon={<CalendarDays className="size-4 text-warn" />}
+            label="Over limit"
+            value={overDays === null ? "—" : String(overDays)}
+            hint={overDays === null ? "no limit set" : "days"}
+          />
+        </div>
       </div>
     </>
   );
 }
 
-/** The month's budget at a glance: limit, spent, left, and the daily limit the day colours use. */
-function BudgetBanner({ summary, isCurrent }: { summary: DashboardSummary; isCurrent: boolean }) {
+/** Compact month budget: spent of limit, what's left, a bar, and which daily limit colours the days. */
+function BudgetStrip({ summary, isCurrent }: { summary: DashboardSummary; isCurrent: boolean }) {
   const monthly = summary.monthly_budget;
   const daily = summary.daily_budget;
   const name = monthLabel(summary.month).split(" ")[0];
 
   if (!monthly) {
     return (
-      <Card className="mb-4 flex flex-wrap items-center justify-between gap-3 p-4">
-        <div className="flex items-center gap-3">
-          <span className="grid size-10 place-items-center rounded-2xl border border-line bg-surface-2 text-muted">
-            <PiggyBank className="size-5" />
-          </span>
-          <div>
-            <p className="text-sm font-semibold">No budget for {name}</p>
-            <p className="text-xs text-muted">
-              Spent <Money value={summary.month_total} whole className="text-fg" /> so far
-            </p>
-          </div>
+      <Card className="flex items-center justify-between gap-3 p-4">
+        <div className="min-w-0">
+          <p className="label">No budget for {name}</p>
+          <p className="mt-0.5 text-sm">
+            Spent <Money value={summary.month_total} whole className="font-semibold" />
+          </p>
         </div>
-        <Link href="/budgets" className="rounded-xl border border-line bg-surface-2 px-3.5 py-2 text-xs font-semibold hover:bg-surface-3">
-          Set a monthly budget →
+        <Link href="/budgets" className="shrink-0 rounded-xl border border-line bg-surface-2 px-3 py-2 text-xs font-semibold hover:bg-surface-3">
+          Set budget →
         </Link>
       </Card>
     );
@@ -213,53 +228,41 @@ function BudgetBanner({ summary, isCurrent }: { summary: DashboardSummary; isCur
   const over = Number(monthly.remaining) < 0;
   const color = STATUS_COLOR[monthly.status];
   return (
-    <Card className="mb-4 p-4 sm:p-5">
-      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-        <div className="flex items-center gap-3">
-          <span className="grid size-10 place-items-center rounded-2xl border border-line bg-surface-2" style={{ color, boxShadow: `0 0 16px -6px ${color}` }}>
-            <Target className="size-5" />
-          </span>
-          <div>
-            <p className="label">{name} budget</p>
-            <Money value={monthly.limit} whole className="text-2xl font-semibold" />
-          </div>
+    <Card className="p-4">
+      <div className="flex items-end justify-between gap-3">
+        <div className="min-w-0">
+          <p className="label flex items-center gap-1.5">
+            <Target className="size-3.5" style={{ color }} /> {name} budget
+          </p>
+          <p className="mt-1 text-sm text-muted">
+            <Money value={monthly.spent} whole className="text-lg font-semibold text-fg" /> of <Money value={monthly.limit} whole />
+          </p>
         </div>
-        <div className="flex gap-6 text-sm">
-          <div>
-            <p className="label">Spent</p>
-            <Money value={monthly.spent} whole className="text-lg font-semibold" />
-          </div>
-          <div>
-            <p className="label">{over ? "Over by" : "Left"}</p>
-            <Money value={monthly.remaining} whole className="text-lg font-semibold" style={{ color }} />
-          </div>
-          {isCurrent && summary.safe_to_spend_today !== null && (
-            <div className="hidden sm:block">
-              <p className="label">Safe today</p>
-              <Money value={summary.safe_to_spend_today} whole className="text-lg font-semibold text-accent-2" />
-            </div>
-          )}
+        <div className="text-right">
+          <Money value={monthly.remaining} whole className="text-lg font-semibold" style={{ color }} />
+          <p className="text-[11px] text-muted">{over ? "over budget" : "left"}</p>
         </div>
       </div>
-      <div className="mt-4 flex items-center gap-3">
-        <ProgressBar percent={monthly.percent} status={monthly.status} className="flex-1" />
-        <span className="num text-xs font-semibold" style={{ color }}>
+      <div className="mt-3 flex items-center gap-2">
+        <ProgressBar percent={monthly.percent} status={monthly.status} className="h-1.5 flex-1" />
+        <span className="num text-[11px] font-semibold" style={{ color }}>
           {monthly.percent}%
         </span>
       </div>
-      <p className="mt-2 text-xs text-muted">
+      <p className="mt-2 text-[11px] text-muted">
+        {isCurrent && summary.safe_to_spend_today !== null && (
+          <>
+            Safe today <Money value={summary.safe_to_spend_today} whole className="font-semibold text-accent-2" /> ·{" "}
+          </>
+        )}
         {daily ? (
           <>
-            Day colours compare each day with your <Money value={daily.limit} whole className="text-fg" /> daily limit
+            days coloured vs <Money value={daily.limit} whole className="text-fg" />/day
           </>
         ) : (
-          <>
-            Add a daily limit on{" "}
-            <Link href="/budgets" className="text-accent-2 hover:underline">
-              Budgets
-            </Link>{" "}
-            to colour days green / amber / red
-          </>
+          <Link href="/budgets" className="text-accent-2 hover:underline">
+            add a daily limit to colour days
+          </Link>
         )}
       </p>
     </Card>
