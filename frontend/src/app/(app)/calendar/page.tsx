@@ -244,7 +244,7 @@ function BudgetStrip({ summary, isCurrent }: { summary: DashboardSummary; isCurr
         </div>
       </div>
       <div className="mt-3 flex items-center gap-2">
-        <ProgressBar percent={monthly.percent} status={monthly.status} className="h-1.5 flex-1" />
+        <ProgressBar percent={monthly.percent} className="h-1.5 flex-1" />
         <span className="num text-[11px] font-semibold" style={{ color }}>
           {monthly.percent}%
         </span>

@@ -88,7 +88,7 @@ function OverallCard({ budget, onEdit }: { budget: Budget; onEdit: () => void })
   const over = Number(p.remaining) < 0;
   return (
     <Card className="flex h-full items-center gap-5">
-      <Ring percent={p.percent} color={STATUS_COLOR[p.status]} size={124} stroke={11}>
+      <Ring percent={p.percent} size={124} stroke={11}>
         <p className="num text-xl font-semibold">{p.percent}%</p>
       </Ring>
       <div className="min-w-0 flex-1">
@@ -128,7 +128,7 @@ function CategoryBudgetRow({ budget, onEdit }: { budget: Budget; onEdit: () => v
             <span className="text-muted"> / <Money value={p.limit} whole /></span>
           </p>
         </div>
-        <ProgressBar percent={p.percent} status={p.status} className="mt-2" />
+        <ProgressBar percent={p.percent} className="mt-2" />
       </div>
     </button>
   );

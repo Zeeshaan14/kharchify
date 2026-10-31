@@ -71,7 +71,7 @@ function Dashboard({ data, isCurrent }: { data: DashboardSummary; isCurrent: boo
             <Money value={data.spent_today} className="text-2xl font-semibold sm:text-3xl" />
             {daily ? (
               <>
-                <ProgressBar percent={daily.percent} status={daily.status} className="mt-3" />
+                <ProgressBar percent={daily.percent} className="mt-3" />
                 <p className="mt-2 text-xs text-muted">
                   of <Money value={daily.limit} whole /> daily limit
                 </p>
@@ -86,7 +86,7 @@ function Dashboard({ data, isCurrent }: { data: DashboardSummary; isCurrent: boo
             <Money value={data.month_total} whole className="text-2xl font-semibold sm:text-3xl" />
             {monthly ? (
               <>
-                <ProgressBar percent={monthly.percent} status={monthly.status} className="mt-3" />
+                <ProgressBar percent={monthly.percent} className="mt-3" />
                 <p className="mt-2 text-xs text-muted">
                   of <Money value={monthly.limit} whole /> budget
                 </p>
@@ -196,7 +196,7 @@ function Hero({ data, isCurrent }: { data: DashboardSummary; isCurrent: boolean 
 
         {monthly && (
           <div className="flex items-center gap-5 self-center md:flex-col md:gap-3">
-            <Ring percent={monthly.percent} color={STATUS_COLOR[monthly.status]} size={168} stroke={13}>
+            <Ring percent={monthly.percent} size={168} stroke={13}>
               <div>
                 <p className="num text-3xl font-semibold">{monthly.percent}%</p>
                 <p className="label mt-0.5 !text-[10px]">of budget</p>

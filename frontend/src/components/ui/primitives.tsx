@@ -143,16 +143,15 @@ export function CategoryBadge({
   );
 }
 
-/** Budget bar: neon gradient that shifts colour with status. */
-export function ProgressBar({ percent, status, className }: { percent: number; status: BudgetStatus; className?: string }) {
-  const color = STATUS_COLOR[status];
+/** Budget bar in the brand gradient (status is shown in the surrounding text). */
+export function ProgressBar({ percent, className }: { percent: number; className?: string }) {
   return (
     <div className={clsx("h-2 overflow-hidden rounded-full bg-surface-3", className)}>
       <motion.div
         className="h-full rounded-full"
         style={{
-          background: color,
-          boxShadow: `0 0 8px color-mix(in oklab, ${color} 45%, transparent)`,
+          background: "linear-gradient(90deg, var(--accent), var(--accent-2))",
+          boxShadow: "0 0 10px color-mix(in oklab, var(--accent) 45%, transparent)",
         }}
         initial={{ width: 0 }}
         animate={{ width: `${Math.max(Math.min(percent, 100), 2)}%` }}
@@ -162,40 +161,46 @@ export function ProgressBar({ percent, status, className }: { percent: number; s
   );
 }
 
-/** Glowing circular gauge. */
+/** Glowing circular gauge in the brand gradient (violet → cyan). */
 export function Ring({
   percent,
-  color,
   size = 160,
   stroke = 12,
   children,
 }: {
   percent: number;
-  color: string;
   size?: number;
   stroke?: number;
   children?: ReactNode;
 }) {
+  // useId() contains colons, which break url(#…) references.
+  const gid = `ring${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const r = (size - stroke) / 2;
   const circumference = 2 * Math.PI * r;
   const filled = Math.min(percent, 100) / 100;
   return (
     <div className="relative grid shrink-0 place-items-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90 overflow-visible">
+        <defs>
+          <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="var(--accent-2)" />
+            <stop offset="100%" stopColor="var(--accent)" />
+          </linearGradient>
+        </defs>
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--surface-3)" strokeWidth={stroke} />
         <motion.circle
           cx={size / 2}
           cy={size / 2}
           r={r}
           fill="none"
-          stroke={color}
+          stroke={`url(#${gid})`}
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={circumference}
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset: circumference * (1 - filled) }}
           transition={{ type: "spring", stiffness: 50, damping: 18 }}
-          style={{ filter: `drop-shadow(0 0 6px color-mix(in oklab, ${color} 55%, transparent))` }}
+          style={{ filter: "drop-shadow(0 0 8px color-mix(in oklab, var(--accent) 60%, transparent))" }}
         />
       </svg>
       <div className="absolute inset-0 grid place-items-center text-center">{children}</div>

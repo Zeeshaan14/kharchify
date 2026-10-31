@@ -50,13 +50,14 @@ export function PaceChart({ month, daily, monthlyLimit }: { month: string; daily
   const gid = `pace${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const first = parseISO(`${month}-01`);
   const days = getDaysInMonth(first);
-  const byDay = new Map(daily.map((d) => [d.day, Number(d.cumulative)]));
+  // Older API versions don't send "cumulative"; skip missing values rather than plotting NaN.
+  const byDay = new Map(daily.filter((d) => d.cumulative != null).map((d) => [d.day, Number(d.cumulative)]));
   // Whole month on the x-axis; days after today have no value yet.
   const data = Array.from({ length: days }, (_, i) => {
     const day = format(new Date(first.getFullYear(), first.getMonth(), i + 1), "yyyy-MM-dd");
     return { day, spent: byDay.get(day) };
   });
-  const last = daily.at(-1);
+  const last = daily.findLast((d) => d.cumulative != null);
   const limit = monthlyLimit ? Number(monthlyLimit) : undefined;
 
   return (
@@ -235,7 +236,7 @@ export function CategoryBreakdown({ rows, monthTotal }: { rows: CategorySpend[];
                   </div>
                   {r.budget ? (
                     <div className="mt-1.5 flex items-center gap-2">
-                      <ProgressBar percent={r.budget.percent} status={r.budget.status} className="h-1.5 flex-1" />
+                      <ProgressBar percent={r.budget.percent} className="h-1.5 flex-1" />
                       <span className="num text-[10px] text-muted">{r.budget.percent}%</span>
                     </div>
                   ) : (
