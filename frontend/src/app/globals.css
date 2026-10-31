@@ -91,7 +91,8 @@ body {
 /* Fixed aurora behind everything; cards blur it. */
 .aurora {
   position: fixed;
-  inset: 0;
+  inset: 0 0 auto 0;
+  height: 100lvh;
   z-index: -1;
   pointer-events: none;
   background:
@@ -110,6 +111,18 @@ body {
 }
 [data-theme="light"] .aurora::after {
   background-image: radial-gradient(rgb(15 15 40 / 0.05) 1px, transparent 1px);
+}
+
+/* In the installed app the status bar is see-through; this keeps scrolled content from showing under the clock. */
+.status-bar-backdrop {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: env(safe-area-inset-top);
+  z-index: 45;
+  background: color-mix(in oklab, var(--bg) 82%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  pointer-events: none;
 }
 
 /* Frosted glass card with a light top edge. */

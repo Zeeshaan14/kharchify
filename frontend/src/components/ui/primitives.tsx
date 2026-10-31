@@ -108,7 +108,7 @@ export function IconButton({ className, ...props }: ButtonHTMLAttributes<HTMLBut
 }
 
 export const inputClass =
-  "h-12 w-full rounded-2xl border border-line bg-surface-2 px-4 text-sm text-fg outline-none transition placeholder:text-faint focus:border-accent/60 focus:bg-surface-3 focus:shadow-[0_0_0_4px_var(--accent-soft)]";
+  "h-12 w-full rounded-2xl border border-line bg-surface-2 px-4 text-base text-fg outline-none sm:text-sm transition placeholder:text-faint focus:border-accent/60 focus:bg-surface-3 focus:shadow-[0_0_0_4px_var(--accent-soft)]";
 
 export function Skeleton({ className }: { className?: string }) {
   return <div className={clsx("animate-pulse rounded-[1.75rem] bg-surface-2", className)} />;

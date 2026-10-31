@@ -216,7 +216,7 @@ function ExpenseForm({ target, onDone }: { target: NonNullable<Target>; onDone: 
                     value={spentOn}
                     max={today}
                     onChange={(e) => e.target.value && setSpentOn(e.target.value)}
-                    className={clsx(inputClass, "h-auto flex-1 py-2 text-xs")}
+                    className={clsx(inputClass, "h-auto min-w-0 flex-1 py-2 sm:text-xs")}
                   />
                 </div>
                 <Segmented

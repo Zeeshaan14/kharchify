@@ -36,6 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="min-h-full font-sans">
         <div className="aurora" aria-hidden />
+        <div className="status-bar-backdrop" aria-hidden />
         <Providers>{children}</Providers>
       </body>
     </html>

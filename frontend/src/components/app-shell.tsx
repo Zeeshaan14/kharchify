@@ -3,6 +3,7 @@
 import { clsx } from "clsx";
 import { CalendarDays, LayoutDashboard, LogOut, Moon, Plus, ReceiptText, Settings, Sun, Target } from "lucide-react";
 import { motion } from "motion/react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ReactNode, useSyncExternalStore } from "react";
@@ -54,9 +55,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="sticky top-0 hidden h-dvh w-[264px] shrink-0 p-4 lg:block">
         <div className="glass flex h-full flex-col gap-1 rounded-[2rem] p-4">
           <Link href="/" className="mb-8 flex items-center gap-3 px-2 pt-2">
-            <span className="bg-accent-gradient glow grid size-10 place-items-center rounded-2xl font-display text-lg font-bold text-white">
-              ₹
-            </span>
+            <Image src="/icon-192.png" alt="" width={40} height={40} className="rounded-xl shadow-[0_8px_20px_-8px_rgb(0_0_0/0.6)]" />
             <span className="font-display text-xl font-semibold tracking-tight">Kharchify</span>
           </Link>
           {NAV.map(({ href, label, icon: Icon }) => (
