@@ -2,10 +2,10 @@
 
 import { motion } from "motion/react";
 import { useCategoryLookup } from "@/lib/categories";
-import { dayLabel, inrFmt, PAYMENT_LABELS } from "@/lib/format";
+import { dayLabel, PAYMENT_LABELS } from "@/lib/format";
 import type { Expense } from "@/lib/types";
 import { useExpenseSheet } from "./expense-sheet";
-import { CategoryBadge } from "./ui/primitives";
+import { CategoryBadge, Money } from "./ui/primitives";
 
 export function ExpenseRow({ expense, showDate = false }: { expense: Expense; showDate?: boolean }) {
   const { openEdit } = useExpenseSheet();
@@ -20,7 +20,7 @@ export function ExpenseRow({ expense, showDate = false }: { expense: Expense; sh
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       onClick={() => openEdit(expense)}
-      className="flex w-full items-center gap-3 rounded-2xl px-2 py-2.5 text-left transition hover:bg-surface-2 active:scale-[0.99]"
+      className="flex w-full items-center gap-3 rounded-2xl px-2 py-2.5 text-left transition hover:bg-surface-2 active:scale-[0.985]"
     >
       <CategoryBadge icon={expense.category.icon} color={color} />
       <div className="min-w-0 flex-1">
@@ -28,9 +28,9 @@ export function ExpenseRow({ expense, showDate = false }: { expense: Expense; sh
         <p className="truncate text-xs text-muted">{meta}</p>
       </div>
       <div className="text-right">
-        <p className="num text-sm font-semibold">−{inrFmt(expense.amount)}</p>
+        <Money value={expense.amount} sign="-" className="text-[15px] font-semibold" />
         {expense.is_need !== null && (
-          <p className={`text-[10px] font-medium ${expense.is_need ? "text-good" : "text-warn"}`}>
+          <p className={`mt-0.5 text-[10px] font-semibold uppercase tracking-wider ${expense.is_need ? "text-good" : "text-warn"}`}>
             {expense.is_need ? "need" : "want"}
           </p>
         )}

@@ -2,10 +2,17 @@
 
 import { X } from "lucide-react";
 import { AnimatePresence, motion, useDragControls } from "motion/react";
-import { type ReactNode, useEffect } from "react";
+import { type ReactNode, useEffect, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { IconButton } from "./primitives";
 
-/** Bottom sheet on phones, centred dialog on larger screens. */
+const noSubscribe = () => () => {};
+
+/**
+ * Bottom sheet on phones, centred dialog on larger screens. Rendered into <body> via a portal:
+ * glass cards (backdrop-filter) and page transitions (transform) would otherwise become the
+ * containing block for position:fixed and trap the sheet inside them.
+ */
 export function Sheet({
   open,
   onClose,
@@ -18,6 +25,7 @@ export function Sheet({
   children: ReactNode;
 }) {
   const drag = useDragControls();
+  const mounted = useSyncExternalStore(noSubscribe, () => true, () => false);
 
   useEffect(() => {
     if (!open) return;
@@ -30,12 +38,13 @@ export function Sheet({
     };
   }, [open, onClose]);
 
-  return (
+  if (!mounted) return null;
+  return createPortal(
     <AnimatePresence>
       {open && (
         <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-6">
           <motion.div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/70 backdrop-blur-md"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -44,7 +53,7 @@ export function Sheet({
           <motion.div
             role="dialog"
             aria-modal="true"
-            className="relative max-h-[92dvh] w-full overflow-y-auto rounded-t-[2rem] border border-line bg-surface p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl sm:max-w-lg sm:rounded-[2rem]"
+            className="relative max-h-[92dvh] w-full overflow-y-auto rounded-t-[2rem] border border-line bg-surface/95 p-5 backdrop-blur-2xl pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-2xl sm:max-w-lg sm:rounded-[2rem]"
             initial={{ y: "100%", opacity: 0.5 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "100%", opacity: 0 }}
@@ -73,6 +82,7 @@ export function Sheet({
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

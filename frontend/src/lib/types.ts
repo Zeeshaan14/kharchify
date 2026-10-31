@@ -88,7 +88,7 @@ export interface DashboardSummary {
   safe_to_spend_today: Money | null;
   by_category: CategorySpend[];
   top_expenses: Expense[];
-  daily: { day: string; total: Money }[];
+  daily: { day: string; total: Money; cumulative: Money }[];
 }
 
 export interface ApiToken {

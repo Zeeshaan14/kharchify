@@ -44,7 +44,9 @@ def test_current_month_summary(client, auth_headers, food_id):
     assert [Decimal(e["amount"]) for e in s["top_expenses"]] == [2000, 1000, 500]
 
     assert len(s["daily"]) == 11
-    assert s["daily"][0] == {"day": "2026-10-01", "total": "1000.00"}
+    assert s["daily"][0] == {"day": "2026-10-01", "total": "1000.00", "cumulative": "1000.00"}
+    assert Decimal(s["daily"][9]["cumulative"]) == Decimal("3000")
+    assert Decimal(s["daily"][-1]["cumulative"]) == Decimal(s["month_total"])
     assert Decimal(s["daily"][1]["total"]) == 0
     assert Decimal(s["daily"][9]["total"]) == Decimal("2000")
 

@@ -3,45 +3,62 @@
 /* Theme is a data attribute on <html>, set before paint by the inline script in layout.tsx. */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
+/* "Bold dark glass": near-black canvas, colour glows behind frosted cards, neon accents. */
 :root,
 [data-theme="dark"] {
-  --bg: #09090d;
-  --surface: #121219;
-  --surface-2: #1a1a23;
-  --surface-3: #23232e;
-  --border: rgb(255 255 255 / 0.07);
-  --text: #ededf2;
-  --muted: #8a8a9b;
-  --faint: #55556a;
-  --accent: #8b7cff;
-  --accent-soft: rgb(139 124 255 / 0.14);
+  --bg: #050507;
+  --glass: rgb(255 255 255 / 0.035);
+  --glass-strong: rgb(255 255 255 / 0.06);
+  --glass-border: rgb(255 255 255 / 0.08);
+  --glass-highlight: rgb(255 255 255 / 0.14);
+  --surface: #0e0e14;
+  --surface-2: rgb(255 255 255 / 0.05);
+  --surface-3: rgb(255 255 255 / 0.09);
+  --border: rgb(255 255 255 / 0.08);
+  --text: #f4f4f8;
+  --muted: #9494a8;
+  --faint: #5c5c70;
+  --accent: #8b5cf6;
+  --accent-2: #22d3ee;
+  --accent-soft: rgb(139 92 246 / 0.16);
   --good: #34d399;
   --warn: #fbbf24;
-  --bad: #f87171;
-  --glow: rgb(139 124 255 / 0.22);
+  --bad: #fb7185;
+  --aurora-1: rgb(139 92 246 / 0.28);
+  --aurora-2: rgb(34 211 238 / 0.14);
+  --aurora-3: rgb(236 72 153 / 0.12);
   color-scheme: dark;
 }
 
 [data-theme="light"] {
-  --bg: #f5f5f8;
+  --bg: #eef0f6;
+  --glass: rgb(255 255 255 / 0.62);
+  --glass-strong: rgb(255 255 255 / 0.8);
+  --glass-border: rgb(15 15 40 / 0.07);
+  --glass-highlight: rgb(255 255 255 / 0.9);
   --surface: #ffffff;
-  --surface-2: #f0f0f5;
-  --surface-3: #e6e6ee;
-  --border: rgb(15 15 35 / 0.08);
-  --text: #15151d;
-  --muted: #6b6b7d;
-  --faint: #a4a4b5;
-  --accent: #6d5bf5;
-  --accent-soft: rgb(109 91 245 / 0.1);
-  --good: #10b981;
+  --surface-2: rgb(15 15 40 / 0.04);
+  --surface-3: rgb(15 15 40 / 0.08);
+  --border: rgb(15 15 40 / 0.08);
+  --text: #12121a;
+  --muted: #646478;
+  --faint: #a2a2b4;
+  --accent: #7c3aed;
+  --accent-2: #0891b2;
+  --accent-soft: rgb(124 58 237 / 0.1);
+  --good: #059669;
   --warn: #d97706;
-  --bad: #ef4444;
-  --glow: rgb(109 91 245 / 0.14);
+  --bad: #e11d48;
+  --aurora-1: rgb(139 92 246 / 0.22);
+  --aurora-2: rgb(34 211 238 / 0.18);
+  --aurora-3: rgb(236 72 153 / 0.1);
   color-scheme: light;
 }
 
 @theme inline {
   --color-bg: var(--bg);
+  --color-glass: var(--glass);
+  --color-glass-strong: var(--glass-strong);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
   --color-surface-3: var(--surface-3);
@@ -50,12 +67,14 @@
   --color-muted: var(--muted);
   --color-faint: var(--faint);
   --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
   --color-accent-soft: var(--accent-soft);
   --color-good: var(--good);
   --color-warn: var(--warn);
   --color-bad: var(--bad);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-sora);
 }
 
 html {
@@ -63,18 +82,82 @@ html {
 }
 
 body {
-  background:
-    radial-gradient(1200px 600px at 10% -10%, var(--glow), transparent 60%),
-    var(--bg);
-  background-attachment: fixed;
+  /* transparent so the fixed .aurora layer (z-index -1) shows; <html> paints the base colour */
+  background: transparent;
   color: var(--text);
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Fixed aurora behind everything; cards blur it. */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(40rem 28rem at 12% -5%, var(--aurora-1), transparent 70%),
+    radial-gradient(36rem 26rem at 95% 10%, var(--aurora-2), transparent 70%),
+    radial-gradient(34rem 30rem at 60% 110%, var(--aurora-3), transparent 70%);
+}
+.aurora::after {
+  /* faint dot grid for texture */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgb(255 255 255 / 0.035) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: linear-gradient(to bottom, black, transparent 80%);
+}
+[data-theme="light"] .aurora::after {
+  background-image: radial-gradient(rgb(15 15 40 / 0.05) 1px, transparent 1px);
+}
+
+/* Frosted glass card with a light top edge. */
+.glass {
+  position: relative;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  box-shadow:
+    inset 0 1px 0 0 var(--glass-highlight),
+    0 20px 50px -30px rgb(0 0 0 / 0.6);
+}
+[data-theme="light"] .glass {
+  box-shadow:
+    inset 0 1px 0 0 var(--glass-highlight),
+    0 20px 40px -28px rgb(40 30 90 / 0.25);
+}
+
+/* Violet → cyan accent text */
+.text-gradient {
+  background: linear-gradient(100deg, var(--accent) 0%, #c084fc 45%, var(--accent-2) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.bg-accent-gradient {
+  background: linear-gradient(120deg, var(--accent) 0%, #a855f7 50%, var(--accent-2) 130%);
+}
+
+.glow {
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08) inset, 0 10px 40px -8px var(--accent);
+}
+
 /* Money lines up in columns. */
 .num {
+  font-family: var(--font-sora), var(--font-geist-sans), sans-serif;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 .no-scrollbar::-webkit-scrollbar {
@@ -84,7 +167,6 @@ body {
   scrollbar-width: none;
 }
 
-/* Recharts focus outline on click */
 .recharts-wrapper *:focus {
   outline: none;
 }

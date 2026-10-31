@@ -5,11 +5,10 @@ import { Pencil, Plus, Target, Trash2 } from "lucide-react";
 import { motion } from "motion/react";
 import { type FormEvent, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
-import { Button, Card, CategoryBadge, EmptyState, ErrorNote, IconButton, ProgressBar, Ring, Segmented, Skeleton, STATUS_COLOR } from "@/components/ui/primitives";
+import { Button, Card, CategoryBadge, EmptyState, ErrorNote, IconButton, Money, ProgressBar, Ring, Segmented, Skeleton, STATUS_COLOR } from "@/components/ui/primitives";
 import { Sheet } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
 import { useCategoryLookup } from "@/lib/categories";
-import { inrFmt } from "@/lib/format";
 import { useBudgets, useCategories, useDeleteBudget, useSaveBudget } from "@/lib/queries";
 import type { Budget, BudgetPeriod } from "@/lib/types";
 
@@ -89,24 +88,24 @@ function OverallCard({ budget, onEdit }: { budget: Budget; onEdit: () => void })
   const over = Number(p.remaining) < 0;
   return (
     <Card className="flex h-full items-center gap-5">
-      <Ring percent={p.percent} color={STATUS_COLOR[p.status]} size={120} stroke={10}>
+      <Ring percent={p.percent} color={STATUS_COLOR[p.status]} size={124} stroke={11}>
         <p className="num text-xl font-semibold">{p.percent}%</p>
       </Ring>
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-muted">{budget.period === "monthly" ? "This month" : "Today"}</p>
-            <p className="num mt-1 text-2xl font-semibold">{inrFmt(budget.amount, { whole: true })}</p>
+            <Money value={budget.amount} whole className="mt-1 block text-3xl font-semibold" />
           </div>
           <IconButton onClick={onEdit} aria-label="Edit budget">
             <Pencil className="size-4" />
           </IconButton>
         </div>
         <p className="mt-2 text-sm text-muted">
-          <span className="num text-fg">{inrFmt(p.spent)}</span> spent
+          <Money value={p.spent} className="text-fg" /> spent
         </p>
         <p className="mt-1 text-sm font-medium" style={{ color: STATUS_COLOR[p.status] }}>
-          {over ? `${inrFmt(-Number(p.remaining))} over` : `${inrFmt(p.remaining)} left`} · {STATUS_TEXT[p.status]}
+          <Money value={p.remaining} /> {over ? "over" : "left"} · {STATUS_TEXT[p.status]}
         </p>
       </div>
     </Card>
@@ -125,8 +124,8 @@ function CategoryBudgetRow({ budget, onEdit }: { budget: Budget; onEdit: () => v
             {budget.category!.name} <span className="text-xs font-normal text-faint">· {budget.period}</span>
           </p>
           <p className="num text-sm">
-            <span className="font-semibold">{inrFmt(p.spent, { whole: true })}</span>
-            <span className="text-muted"> / {inrFmt(p.limit, { whole: true })}</span>
+            <Money value={p.spent} whole className="font-semibold" />
+            <span className="text-muted"> / <Money value={p.limit} whole /></span>
           </p>
         </div>
         <ProgressBar percent={p.percent} status={p.status} className="mt-2" />

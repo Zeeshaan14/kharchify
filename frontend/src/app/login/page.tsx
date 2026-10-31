@@ -29,8 +29,8 @@ export default function LoginPage() {
   return (
     <main className="relative grid min-h-dvh place-items-center overflow-hidden px-5">
       {/* Soft glow orbs */}
-      <div className="pointer-events-none absolute -left-32 top-1/4 size-96 rounded-full bg-accent/25 blur-[120px]" />
-      <div className="pointer-events-none absolute -right-32 bottom-1/4 size-96 rounded-full bg-good/15 blur-[120px]" />
+      <div className="pointer-events-none absolute -left-32 top-1/4 size-[28rem] rounded-full bg-accent/30 blur-[120px]" />
+      <div className="pointer-events-none absolute -right-32 bottom-1/4 size-[28rem] rounded-full bg-accent-2/20 blur-[120px]" />
 
       <motion.div
         initial={{ opacity: 0, y: 24 }}
@@ -39,14 +39,14 @@ export default function LoginPage() {
         className="relative w-full max-w-sm"
       >
         <div className="mb-8 text-center">
-          <span className="mx-auto mb-5 grid size-14 place-items-center rounded-2xl bg-accent text-2xl font-bold text-white shadow-[0_16px_40px_-10px_var(--accent)]">
+          <span className="bg-accent-gradient glow mx-auto mb-6 grid size-16 place-items-center rounded-[1.4rem] font-display text-3xl font-bold text-white">
             ₹
           </span>
-          <h1 className="text-3xl font-semibold tracking-tight">Kharchify</h1>
-          <p className="mt-2 text-sm text-muted">Know where every rupee goes.</p>
+          <h1 className="font-display text-4xl font-semibold tracking-tight">Kharchify</h1>
+          <p className="mt-2 text-sm text-muted">Know where <span className="text-gradient font-semibold">every rupee</span> goes.</p>
         </div>
 
-        <form onSubmit={submit} className="space-y-3 rounded-[2rem] border border-line bg-surface/80 p-6 shadow-2xl backdrop-blur-xl">
+        <form onSubmit={submit} className="glass space-y-3 rounded-[2rem] p-6">
           <input
             type="email"
             autoComplete="email"

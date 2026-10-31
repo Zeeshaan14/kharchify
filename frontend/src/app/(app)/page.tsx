@@ -1,10 +1,11 @@
 "use client";
 
-import { ArrowUpRight, PiggyBank, ReceiptText, Sparkles } from "lucide-react";
+import { ArrowUpRight, CalendarClock, PiggyBank, ReceiptText, Sparkles, Sun, Wallet } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
+import { type ReactNode, useState } from "react";
 import { PageHeader } from "@/components/app-shell";
-import { CategoryBreakdown, TrendChart } from "@/components/charts";
+import { CategoryBreakdown, DailyBars, PaceChart, Sparkline } from "@/components/charts";
 import { ExpenseRow } from "@/components/expense-row";
 import { MonthSwitcher, useMonth } from "@/components/month-switcher";
 import {
@@ -13,12 +14,14 @@ import {
   CardTitle,
   EmptyState,
   ErrorNote,
+  Money,
   ProgressBar,
   Ring,
+  Segmented,
   Skeleton,
   STATUS_COLOR,
 } from "@/components/ui/primitives";
-import { inrFmt, monthLabel } from "@/lib/format";
+import { monthLabel } from "@/lib/format";
 import { useDashboard, useExpensePages, useExpensesBetween, useMe } from "@/lib/queries";
 import type { DashboardSummary } from "@/lib/types";
 
@@ -28,9 +31,9 @@ function greeting() {
 }
 
 const rise = (i: number) => ({
-  initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0 },
-  transition: { delay: i * 0.06, type: "spring" as const, stiffness: 140, damping: 20 },
+  initial: { opacity: 0, y: 18, filter: "blur(6px)" },
+  animate: { opacity: 1, y: 0, filter: "blur(0px)" },
+  transition: { delay: i * 0.07, type: "spring" as const, stiffness: 130, damping: 20 },
 });
 
 export default function DashboardPage() {
@@ -42,7 +45,7 @@ export default function DashboardPage() {
     <>
       <PageHeader
         title={isCurrent ? `${greeting()}${me ? `, ${me.name.split(" ")[0]}` : ""}` : monthLabel(month)}
-        subtitle={isCurrent ? "Here's your money this month" : "Month in review"}
+        subtitle={isCurrent ? "Your money, this month" : "Month in review"}
         action={<MonthSwitcher month={month} onChange={setMonth} />}
       />
       <ErrorNote error={error} />
@@ -56,114 +59,66 @@ function Dashboard({ data, isCurrent }: { data: DashboardSummary; isCurrent: boo
   const daily = data.daily_budget;
 
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
-      {/* Hero */}
-      <motion.div {...rise(0)} className="lg:col-span-2">
-        <div className="relative h-full overflow-hidden rounded-3xl border border-line bg-gradient-to-br from-accent/90 via-accent/70 to-[#5b3fd9] p-6 text-white shadow-[0_30px_60px_-30px_var(--accent)]">
-          <div className="pointer-events-none absolute -right-16 -top-16 size-64 rounded-full bg-white/10 blur-2xl" />
-          <div className="pointer-events-none absolute -bottom-24 left-1/3 size-64 rounded-full bg-black/10 blur-2xl" />
-          {isCurrent && data.safe_to_spend_today !== null ? (
-            <div className="relative">
-              <p className="flex items-center gap-1.5 text-sm text-white/80">
-                <Sparkles className="size-4" /> Safe to spend today
-              </p>
-              <AnimatedMoney value={data.safe_to_spend_today} className="mt-2 block text-5xl font-semibold sm:text-6xl" />
-              <p className="mt-3 text-sm text-white/75">
-                {inrFmt(monthly!.remaining, { whole: true })} left for {data.days_left}{" "}
-                {data.days_left === 1 ? "day" : "days"} · spent {inrFmt(data.spent_today)} today
-              </p>
-            </div>
-          ) : (
-            <div className="relative">
-              <p className="text-sm text-white/80">{isCurrent ? "Spent this month" : `Spent in ${monthLabel(data.month)}`}</p>
-              <AnimatedMoney value={data.month_total} className="mt-2 block text-5xl font-semibold sm:text-6xl" />
-              {isCurrent && (
-                <Link href="/budgets" className="mt-4 inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1.5 text-xs font-medium backdrop-blur hover:bg-white/25">
-                  <PiggyBank className="size-3.5" /> Set a monthly budget to see what&apos;s safe to spend
-                </Link>
-              )}
-            </div>
-          )}
-        </div>
+    <div className="space-y-4">
+      <motion.div {...rise(0)}>
+        <Hero data={data} isCurrent={isCurrent} />
       </motion.div>
 
-      {/* Monthly ring */}
-      <motion.div {...rise(1)}>
-        <Card className="flex h-full flex-col items-center justify-center gap-3">
-          {monthly ? (
-            <>
-              <Ring percent={monthly.percent} color={STATUS_COLOR[monthly.status]}>
-                <div>
-                  <p className="num text-2xl font-semibold">{monthly.percent}%</p>
-                  <p className="text-[11px] text-muted">of budget</p>
-                </div>
-              </Ring>
-              <p className="text-center text-sm">
-                <span className="num font-semibold">{inrFmt(data.month_total, { whole: true })}</span>
-                <span className="text-muted"> of {inrFmt(monthly.limit, { whole: true })}</span>
-              </p>
-              <p className="text-xs" style={{ color: STATUS_COLOR[monthly.status] }}>
-                {Number(monthly.remaining) >= 0
-                  ? `${inrFmt(monthly.remaining, { whole: true })} left`
-                  : `${inrFmt(-Number(monthly.remaining), { whole: true })} over`}
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="text-sm text-muted">This month</p>
-              <p className="num text-3xl font-semibold">{inrFmt(data.month_total, { whole: true })}</p>
-              <Link href="/budgets" className="text-xs text-accent hover:underline">
-                Add a budget →
-              </Link>
-            </>
-          )}
-        </Card>
-      </motion.div>
+      {/* Stat tiles */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
+        <motion.div {...rise(1)}>
+          <Stat icon={<Sun className="size-4" />} label="Today" glow={daily ? STATUS_COLOR[daily.status] : undefined}>
+            <Money value={data.spent_today} className="text-2xl font-semibold sm:text-3xl" />
+            {daily ? (
+              <>
+                <ProgressBar percent={daily.percent} status={daily.status} className="mt-3" />
+                <p className="mt-2 text-xs text-muted">
+                  of <Money value={daily.limit} whole /> daily limit
+                </p>
+              </>
+            ) : (
+              <p className="mt-2 text-xs text-muted">No daily limit</p>
+            )}
+          </Stat>
+        </motion.div>
+        <motion.div {...rise(2)}>
+          <Stat icon={<Wallet className="size-4" />} label={isCurrent ? "This month" : "Month total"}>
+            <Money value={data.month_total} whole className="text-2xl font-semibold sm:text-3xl" />
+            {monthly ? (
+              <>
+                <ProgressBar percent={monthly.percent} status={monthly.status} className="mt-3" />
+                <p className="mt-2 text-xs text-muted">
+                  of <Money value={monthly.limit} whole /> budget
+                </p>
+              </>
+            ) : (
+              <p className="mt-2 text-xs text-muted">No monthly budget</p>
+            )}
+          </Stat>
+        </motion.div>
+        {/* The hero already says how many days are left, so phones skip this tile. */}
+        <motion.div {...rise(3)} className="hidden md:block">
+          <Stat icon={<CalendarClock className="size-4" />} label="Days left">
+            <p className="num text-2xl font-semibold sm:text-3xl">{data.days_left ?? "—"}</p>
+            <p className="mt-2 text-xs text-muted">
+              {data.days_left === null ? "Set a monthly budget to track pace" : `in ${monthLabel(data.month).split(" ")[0]}`}
+            </p>
+          </Stat>
+        </motion.div>
+      </div>
 
-      {/* Today */}
-      <motion.div {...rise(2)}>
-        <Card className="h-full">
-          <CardTitle>Today</CardTitle>
-          <p className="num text-3xl font-semibold">{inrFmt(data.spent_today)}</p>
-          {daily ? (
-            <>
-              <ProgressBar percent={daily.percent} status={daily.status} className="mt-4" />
-              <p className="mt-2 text-xs text-muted">
-                {Number(daily.remaining) >= 0
-                  ? `${inrFmt(daily.remaining)} left of ${inrFmt(daily.limit, { whole: true })} daily limit`
-                  : `${inrFmt(-Number(daily.remaining))} over your ${inrFmt(daily.limit, { whole: true })} daily limit`}
-              </p>
-            </>
-          ) : (
-            <p className="mt-2 text-xs text-muted">No daily limit set</p>
-          )}
-          {isCurrent && <TodayList day={data.today} />}
-        </Card>
-      </motion.div>
+      {/* Chart + today */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <motion.div {...rise(4)} className="lg:col-span-2">
+          <SpendingChart data={data} />
+        </motion.div>
+        <motion.div {...rise(5)}>
+          {isCurrent ? <TodayCard day={data.today} /> : <TopCard data={data} />}
+        </motion.div>
+      </div>
 
-      {/* Trend */}
-      <motion.div {...rise(3)} className="lg:col-span-2">
-        <Card className="h-full">
-          <CardTitle
-            action={
-              <Link href="/calendar" className="flex items-center gap-0.5 text-xs text-muted hover:text-fg">
-                Calendar <ArrowUpRight className="size-3.5" />
-              </Link>
-            }
-          >
-            Daily spending
-          </CardTitle>
-          {data.daily.length ? (
-            <TrendChart daily={data.daily} dailyLimit={daily?.limit} />
-          ) : (
-            <EmptyState icon={<ReceiptText className="size-5" />} title="Nothing yet this month" />
-          )}
-        </Card>
-      </motion.div>
-
-      {/* Categories */}
-      <motion.div {...rise(4)} className="lg:col-span-2">
-        <Card className="h-full">
+      <motion.div {...rise(6)}>
+        <Card>
           <CardTitle>Where it went</CardTitle>
           {data.by_category.length ? (
             <CategoryBreakdown rows={data.by_category} monthTotal={data.month_total} />
@@ -173,36 +128,173 @@ function Dashboard({ data, isCurrent }: { data: DashboardSummary; isCurrent: boo
         </Card>
       </motion.div>
 
-      {/* Top + recent */}
-      <motion.div {...rise(5)} className="space-y-4">
-        <Card>
-          <CardTitle>Biggest this month</CardTitle>
-          {data.top_expenses.length ? (
-            <div className="-mx-2">
-              {data.top_expenses.map((e) => (
-                <ExpenseRow key={e.id} expense={e} showDate />
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted">—</p>
-          )}
-        </Card>
-        {isCurrent && <RecentCard />}
-      </motion.div>
+      {isCurrent && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <motion.div {...rise(7)}>
+            <TopCard data={data} />
+          </motion.div>
+          <motion.div {...rise(8)}>
+            <RecentCard />
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
 
-function TodayList({ day }: { day: string }) {
-  const { data: items = [] } = useExpensesBetween(day, day);
-  if (!items.length) return <p className="mt-6 text-sm text-muted">Nothing spent yet today ✨</p>;
+function Hero({ data, isCurrent }: { data: DashboardSummary; isCurrent: boolean }) {
+  const monthly = data.monthly_budget;
+  const showSafe = isCurrent && data.safe_to_spend_today !== null;
+  const over = monthly && Number(monthly.remaining) < 0;
+
   return (
-    <div className="-mx-2 mt-4 border-t border-line pt-2">
-      {items.slice(0, 4).map((e) => (
-        <ExpenseRow key={e.id} expense={e} />
-      ))}
-      {items.length > 4 && <p className="px-2 pt-1 text-xs text-muted">+{items.length - 4} more</p>}
+    <div className="glass relative overflow-hidden rounded-[2rem] p-6 sm:p-8">
+      {/* neon wash */}
+      <div className="pointer-events-none absolute -left-24 -top-32 size-96 rounded-full bg-accent/30 blur-[90px]" />
+      <div className="pointer-events-none absolute -bottom-40 right-10 size-96 rounded-full bg-accent-2/15 blur-[100px]" />
+
+      <div className="relative flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
+        <div className="min-w-0 flex-1">
+          <p className="label flex items-center gap-1.5 !text-fg/80">
+            <Sparkles className="size-3.5 text-accent-2" />
+            {showSafe ? "Safe to spend today" : isCurrent ? "Spent this month" : `Spent in ${monthLabel(data.month)}`}
+          </p>
+          <AnimatedMoney
+            value={showSafe ? data.safe_to_spend_today! : data.month_total}
+            className="mt-3 block text-6xl font-semibold leading-none sm:text-7xl"
+          />
+          <p className="mt-4 text-sm text-muted">
+            {showSafe ? (
+              <>
+                <Money value={monthly!.remaining} whole className="font-semibold text-fg" /> left for {data.days_left}{" "}
+                {data.days_left === 1 ? "day" : "days"} · <Money value={data.spent_today} className="text-fg" /> spent today
+              </>
+            ) : isCurrent ? (
+              <Link href="/budgets" className="inline-flex items-center gap-1 font-medium text-accent-2 hover:underline">
+                <PiggyBank className="size-4" /> Set a monthly budget to see what&apos;s safe to spend
+              </Link>
+            ) : (
+              <>{data.daily.filter((d) => Number(d.total) === 0).length} no-spend days</>
+            )}
+          </p>
+          {data.daily.length > 1 && (
+            <div className="mt-5 max-w-md">
+              <Sparkline daily={data.daily} />
+              <p className="mt-1 text-[11px] text-faint">Last {Math.min(data.daily.length, 14)} days</p>
+            </div>
+          )}
+        </div>
+
+        {monthly && (
+          <div className="flex items-center gap-5 self-center md:flex-col md:gap-3">
+            <Ring percent={monthly.percent} color={STATUS_COLOR[monthly.status]} size={168} stroke={13}>
+              <div>
+                <p className="num text-3xl font-semibold">{monthly.percent}%</p>
+                <p className="label mt-0.5 !text-[10px]">of budget</p>
+              </div>
+            </Ring>
+            <div className="text-left md:text-center">
+              <p className="text-sm font-semibold" style={{ color: STATUS_COLOR[monthly.status] }}>
+                <Money value={monthly.remaining} whole /> {over ? "over" : "left"}
+              </p>
+              <p className="text-xs text-muted">
+                of <Money value={monthly.limit} whole /> this month
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
+  );
+}
+
+function Stat({ icon, label, glow, children }: { icon: ReactNode; label: string; glow?: string; children: ReactNode }) {
+  return (
+    <Card className="h-full p-4 sm:p-5">
+      <div className="mb-3 flex items-center gap-2">
+        <span
+          className="grid size-7 place-items-center rounded-lg border border-line bg-surface-2 text-muted"
+          style={glow ? { color: glow, boxShadow: `0 0 14px -4px ${glow}` } : undefined}
+        >
+          {icon}
+        </span>
+        <span className="label">{label}</span>
+      </div>
+      {children}
+    </Card>
+  );
+}
+
+function SpendingChart({ data }: { data: DashboardSummary }) {
+  const [view, setView] = useState<"pace" | "daily">(data.monthly_budget ? "pace" : "daily");
+  return (
+    <Card className="h-full">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <h2 className="label">{view === "pace" ? "Spending pace" : "Daily spending"}</h2>
+          <p className="mt-1 text-xs text-faint">
+            {view === "pace" ? "Running total vs. a steady path to your budget" : "Red bars broke the daily limit"}
+          </p>
+        </div>
+        <Segmented
+          className="w-40 shrink-0"
+          value={view}
+          onChange={setView}
+          options={[
+            { value: "pace", label: "Pace" },
+            { value: "daily", label: "Daily" },
+          ]}
+        />
+      </div>
+      {data.daily.length === 0 ? (
+        <EmptyState icon={<ReceiptText className="size-5" />} title="Nothing yet this month" />
+      ) : view === "pace" ? (
+        <PaceChart month={data.month} daily={data.daily} monthlyLimit={data.monthly_budget?.limit} />
+      ) : (
+        <DailyBars daily={data.daily} dailyLimit={data.daily_budget?.limit} />
+      )}
+      <Link href="/calendar" className="mt-2 inline-flex items-center gap-0.5 text-xs text-muted hover:text-fg">
+        Open calendar <ArrowUpRight className="size-3.5" />
+      </Link>
+    </Card>
+  );
+}
+
+function TodayCard({ day }: { day: string }) {
+  const { data: items = [], isPending } = useExpensesBetween(day, day);
+  return (
+    <Card className="h-full">
+      <CardTitle>Today&apos;s spends</CardTitle>
+      {isPending ? (
+        <Skeleton className="h-40" />
+      ) : items.length ? (
+        <div className="-mx-2">
+          {items.slice(0, 5).map((e) => (
+            <ExpenseRow key={e.id} expense={e} />
+          ))}
+          {items.length > 5 && <p className="px-2 pt-1 text-xs text-muted">+{items.length - 5} more</p>}
+        </div>
+      ) : (
+        <EmptyState icon={<Sparkles className="size-5" />} title="Nothing spent yet today" hint="A no-spend day so far ✨" />
+      )}
+    </Card>
+  );
+}
+
+function TopCard({ data }: { data: DashboardSummary }) {
+  return (
+    <Card className="h-full">
+      <CardTitle>Biggest this month</CardTitle>
+      {data.top_expenses.length ? (
+        <div className="-mx-2">
+          {data.top_expenses.map((e) => (
+            <ExpenseRow key={e.id} expense={e} showDate />
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-muted">—</p>
+      )}
+    </Card>
   );
 }
 
@@ -210,7 +302,7 @@ function RecentCard() {
   const { data } = useExpensePages({});
   const items = data?.pages[0]?.items.slice(0, 5) ?? [];
   return (
-    <Card>
+    <Card className="h-full">
       <CardTitle
         action={
           <Link href="/expenses" className="flex items-center gap-0.5 text-xs text-muted hover:text-fg">
@@ -232,11 +324,14 @@ function RecentCard() {
 
 function DashboardSkeleton() {
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
-      <Skeleton className="h-48 rounded-3xl lg:col-span-2" />
-      <Skeleton className="h-48 rounded-3xl" />
-      <Skeleton className="h-40 rounded-3xl" />
-      <Skeleton className="h-72 rounded-3xl lg:col-span-2" />
+    <div className="space-y-4">
+      <Skeleton className="h-72 rounded-[2rem]" />
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
+        <Skeleton className="h-32" />
+        <Skeleton className="h-32" />
+        <Skeleton className="col-span-2 h-32 md:col-span-1" />
+      </div>
+      <Skeleton className="h-80" />
     </div>
   );
 }

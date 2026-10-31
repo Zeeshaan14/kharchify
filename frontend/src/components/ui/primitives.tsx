@@ -3,7 +3,7 @@
 import { clsx } from "clsx";
 import { Loader2 } from "lucide-react";
 import { animate, motion, useMotionValue, useTransform } from "motion/react";
-import { type ButtonHTMLAttributes, type ReactNode, useEffect } from "react";
+import { type ButtonHTMLAttributes, type ReactNode, useEffect, useId } from "react";
 import { inrFmt } from "@/lib/format";
 import type { BudgetStatus } from "@/lib/types";
 
@@ -13,20 +13,58 @@ export const STATUS_COLOR: Record<BudgetStatus, string> = {
   over: "var(--bad)",
 };
 
+/** Frosted glass panel. */
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
-  return (
-    <div className={clsx("rounded-3xl border border-line bg-surface p-5 shadow-[0_1px_0_rgb(255_255_255/0.03)_inset]", className)}>
-      {children}
-    </div>
-  );
+  return <div className={clsx("glass rounded-[1.75rem] p-5", className)}>{children}</div>;
 }
 
 export function CardTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
     <div className="mb-4 flex items-center justify-between gap-2">
-      <h2 className="text-sm font-medium text-muted">{children}</h2>
+      <h2 className="label">{children}</h2>
       {action}
     </div>
+  );
+}
+
+/** "₹1,23,456.50" with a dim ₹ and smaller paise. */
+export function Money({
+  value,
+  className,
+  whole = false,
+  sign,
+}: {
+  value: string | number;
+  className?: string;
+  whole?: boolean;
+  sign?: "-" | "+";
+}) {
+  const text = inrFmt(Math.abs(Number(value)), { whole }).replace("₹", "");
+  const [rupees, paise] = text.split(".");
+  return (
+    <span className={clsx("num whitespace-nowrap", className)}>
+      {sign && <span className="opacity-60">{sign === "-" ? "−" : "+"}</span>}
+      <span className="mr-[0.08em] text-[0.62em] font-medium opacity-50">₹</span>
+      {rupees}
+      {paise && <span className="text-[0.6em] opacity-50">.{paise}</span>}
+    </span>
+  );
+}
+
+/** Money that counts up to its value. */
+export function AnimatedMoney({ value, className }: { value: string | number; className?: string }) {
+  const target = Number(value);
+  const mv = useMotionValue(0);
+  const rupees = useTransform(mv, (v) => inrFmt(Math.round(v), { whole: true }).replace("₹", ""));
+  useEffect(() => {
+    const controls = animate(mv, target, { duration: 1.1, ease: [0.16, 1, 0.3, 1] });
+    return () => controls.stop();
+  }, [mv, target]);
+  return (
+    <span className={clsx("num whitespace-nowrap", className)}>
+      <span className="mr-[0.06em] text-[0.55em] font-medium opacity-50">₹</span>
+      <motion.span>{rupees}</motion.span>
+    </span>
   );
 }
 
@@ -41,11 +79,11 @@ export function Button({ variant = "primary", loading, className, children, disa
       {...props}
       disabled={disabled || loading}
       className={clsx(
-        "inline-flex h-11 items-center justify-center gap-2 rounded-2xl px-4 text-sm font-medium transition active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50",
-        variant === "primary" && "bg-accent text-white shadow-[0_8px_24px_-8px_var(--accent)] hover:brightness-110",
-        variant === "soft" && "bg-surface-2 text-fg hover:bg-surface-3",
+        "inline-flex h-12 items-center justify-center gap-2 rounded-2xl px-5 text-sm font-semibold transition active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40",
+        variant === "primary" && "bg-accent-gradient glow text-white hover:brightness-110",
+        variant === "soft" && "border border-line bg-surface-2 text-fg hover:bg-surface-3",
         variant === "ghost" && "text-muted hover:bg-surface-2 hover:text-fg",
-        variant === "danger" && "bg-bad/10 text-bad hover:bg-bad/20",
+        variant === "danger" && "bg-bad/12 text-bad hover:bg-bad/20",
         className,
       )}
     >
@@ -60,7 +98,7 @@ export function IconButton({ className, ...props }: ButtonHTMLAttributes<HTMLBut
     <button
       {...props}
       className={clsx(
-        "grid size-10 place-items-center rounded-full text-muted transition hover:bg-surface-2 hover:text-fg active:scale-95 disabled:opacity-30",
+        "grid size-10 place-items-center rounded-full text-muted transition hover:bg-surface-2 hover:text-fg active:scale-90 disabled:opacity-30",
         className,
       )}
     />
@@ -68,13 +106,13 @@ export function IconButton({ className, ...props }: ButtonHTMLAttributes<HTMLBut
 }
 
 export const inputClass =
-  "h-11 w-full rounded-2xl border border-line bg-surface-2 px-4 text-sm text-fg outline-none transition placeholder:text-faint focus:border-accent focus:bg-surface";
+  "h-12 w-full rounded-2xl border border-line bg-surface-2 px-4 text-sm text-fg outline-none transition placeholder:text-faint focus:border-accent/60 focus:bg-surface-3 focus:shadow-[0_0_0_4px_var(--accent-soft)]";
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={clsx("animate-pulse rounded-2xl bg-surface-2", className)} />;
+  return <div className={clsx("animate-pulse rounded-[1.75rem] bg-surface-2", className)} />;
 }
 
-/** Category emoji on a tinted circle. */
+/** Category emoji on a softly glowing tile. */
 export function CategoryBadge({
   icon,
   color,
@@ -88,38 +126,45 @@ export function CategoryBadge({
   return (
     <span
       className={clsx(
-        "grid shrink-0 place-items-center rounded-2xl",
-        size === "sm" && "size-8 text-base",
-        size === "md" && "size-10 text-lg",
-        size === "lg" && "size-12 text-xl",
+        "grid shrink-0 place-items-center",
+        size === "sm" && "size-9 rounded-xl text-base",
+        size === "md" && "size-11 rounded-2xl text-lg",
+        size === "lg" && "size-14 rounded-2xl text-2xl",
       )}
-      style={{ background: `${c}22`, boxShadow: `inset 0 0 0 1px ${c}33` }}
+      style={{
+        background: `linear-gradient(145deg, ${c}38, ${c}12)`,
+        boxShadow: `inset 0 1px 0 ${c}40, 0 6px 18px -8px ${c}90`,
+      }}
     >
       {icon ?? "•"}
     </span>
   );
 }
 
-/** Horizontal budget bar; turns amber/red with status. */
+/** Budget bar: neon gradient that shifts colour with status. */
 export function ProgressBar({ percent, status, className }: { percent: number; status: BudgetStatus; className?: string }) {
+  const color = STATUS_COLOR[status];
   return (
     <div className={clsx("h-2 overflow-hidden rounded-full bg-surface-3", className)}>
       <motion.div
         className="h-full rounded-full"
-        style={{ background: STATUS_COLOR[status] }}
+        style={{
+          background: `linear-gradient(90deg, color-mix(in oklab, ${color} 55%, transparent), ${color})`,
+          boxShadow: `0 0 12px ${color}`,
+        }}
         initial={{ width: 0 }}
-        animate={{ width: `${Math.min(percent, 100)}%` }}
-        transition={{ type: "spring", stiffness: 120, damping: 20 }}
+        animate={{ width: `${Math.max(Math.min(percent, 100), 2)}%` }}
+        transition={{ type: "spring", stiffness: 110, damping: 22 }}
       />
     </div>
   );
 }
 
-/** Circular progress ring. */
+/** Glowing circular gauge. */
 export function Ring({
   percent,
   color,
-  size = 148,
+  size = 160,
   stroke = 12,
   children,
 }: {
@@ -129,43 +174,39 @@ export function Ring({
   stroke?: number;
   children?: ReactNode;
 }) {
+  // useId() contains colons, which break url(#…) references.
+  const gid = `ring${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const r = (size - stroke) / 2;
   const circumference = 2 * Math.PI * r;
   const filled = Math.min(percent, 100) / 100;
   return (
-    <div className="relative grid place-items-center" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="-rotate-90">
+    <div className="relative grid shrink-0 place-items-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90 overflow-visible">
+        <defs>
+          <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="var(--accent)" />
+            <stop offset="100%" stopColor={color} />
+          </linearGradient>
+        </defs>
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--surface-3)" strokeWidth={stroke} />
         <motion.circle
           cx={size / 2}
           cy={size / 2}
           r={r}
           fill="none"
-          stroke={color}
+          stroke={`url(#${gid})`}
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={circumference}
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset: circumference * (1 - filled) }}
-          transition={{ type: "spring", stiffness: 60, damping: 18 }}
-          style={{ filter: `drop-shadow(0 0 8px ${color}66)` }}
+          transition={{ type: "spring", stiffness: 50, damping: 18 }}
+          style={{ filter: `drop-shadow(0 0 10px ${color})` }}
         />
       </svg>
       <div className="absolute inset-0 grid place-items-center text-center">{children}</div>
     </div>
   );
-}
-
-/** Money that counts up to its value. */
-export function AnimatedMoney({ value, className }: { value: string | number; className?: string }) {
-  const target = Number(value);
-  const mv = useMotionValue(0);
-  const text = useTransform(mv, (v) => inrFmt(Math.round(v * 100) / 100));
-  useEffect(() => {
-    const controls = animate(mv, target, { duration: 0.9, ease: [0.16, 1, 0.3, 1] });
-    return () => controls.stop();
-  }, [mv, target]);
-  return <motion.span className={clsx("num", className)}>{text}</motion.span>;
 }
 
 export function Segmented<T extends string>({
@@ -179,23 +220,24 @@ export function Segmented<T extends string>({
   onChange: (value: T) => void;
   className?: string;
 }) {
+  const id = useId();
   return (
-    <div className={clsx("flex rounded-2xl bg-surface-2 p-1", className)}>
+    <div className={clsx("flex rounded-2xl border border-line bg-surface-2 p-1", className)}>
       {options.map((o) => (
         <button
           key={o.value}
           type="button"
           onClick={() => onChange(o.value)}
           className={clsx(
-            "relative flex-1 rounded-xl px-3 py-2 text-xs font-medium transition",
+            "relative flex-1 rounded-xl px-3 py-2 text-xs font-semibold transition",
             value === o.value ? "text-fg" : "text-muted hover:text-fg",
           )}
         >
           {value === o.value && (
             <motion.span
-              layoutId={`seg-${options.map((x) => x.value).join("")}`}
-              className="absolute inset-0 rounded-xl bg-surface-3 shadow-sm"
-              transition={{ type: "spring", stiffness: 400, damping: 32 }}
+              layoutId={`seg-${id}`}
+              className="absolute inset-0 rounded-xl bg-surface-3 shadow-[inset_0_1px_0_var(--glass-highlight)]"
+              transition={{ type: "spring", stiffness: 420, damping: 34 }}
             />
           )}
           <span className="relative">{o.label}</span>
@@ -208,8 +250,8 @@ export function Segmented<T extends string>({
 export function EmptyState({ icon, title, hint }: { icon: ReactNode; title: string; hint?: ReactNode }) {
   return (
     <div className="flex flex-col items-center gap-2 py-10 text-center">
-      <div className="grid size-12 place-items-center rounded-2xl bg-surface-2 text-muted">{icon}</div>
-      <p className="text-sm font-medium">{title}</p>
+      <div className="grid size-12 place-items-center rounded-2xl border border-line bg-surface-2 text-muted">{icon}</div>
+      <p className="text-sm font-semibold">{title}</p>
       {hint && <p className="max-w-xs text-xs text-muted">{hint}</p>}
     </div>
   );
@@ -217,5 +259,5 @@ export function EmptyState({ icon, title, hint }: { icon: ReactNode; title: stri
 
 export function ErrorNote({ error }: { error: unknown }) {
   if (!error) return null;
-  return <p className="rounded-2xl bg-bad/10 px-4 py-3 text-sm text-bad">{(error as Error).message}</p>;
+  return <p className="rounded-2xl border border-bad/25 bg-bad/10 px-4 py-3 text-sm text-bad">{(error as Error).message}</p>;
 }

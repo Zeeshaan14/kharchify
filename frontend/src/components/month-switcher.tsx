@@ -17,13 +17,13 @@ export function useMonth() {
 export function MonthSwitcher({ month, onChange }: { month: string; onChange: (m: string) => void }) {
   const atLatest = month >= currentMonth();
   return (
-    <div className="flex items-center gap-1 rounded-full border border-line bg-surface p-1">
+    <div className="glass flex items-center gap-1 rounded-full p-1">
       <IconButton className="size-8" onClick={() => onChange(shift(month, -1))} aria-label="Previous month">
         <ChevronLeft className="size-4" />
       </IconButton>
       <button
         onClick={() => onChange(currentMonth())}
-        className="min-w-28 px-1 text-center text-sm font-medium"
+        className="font-display min-w-32 px-1 text-center text-sm font-semibold"
         title="Back to this month"
       >
         {monthLabel(month)}

@@ -165,6 +165,7 @@ class CategorySpend(BaseModel):
 class DayTotal(BaseModel):
     day: date
     total: Decimal
+    cumulative: Decimal  # month total up to and including this day
 
 
 class DashboardSummary(BaseModel):

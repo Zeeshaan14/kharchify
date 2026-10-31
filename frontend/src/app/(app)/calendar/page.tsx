@@ -51,14 +51,20 @@ export default function CalendarPage() {
   const overDays = limit ? past.filter(([, t]) => t > limit).length : null;
 
   /** Tint by share of the daily limit (green → amber → red), or by share of the biggest day. */
-  function tint(total: number) {
-    if (!total) return undefined;
+  function cellStyle(total: number): React.CSSProperties {
+    if (!total) return { background: "var(--surface-2)" };
     if (limit) {
       const r = total / limit;
       const color = r > 1 ? "var(--bad)" : r >= 0.8 ? "var(--warn)" : "var(--good)";
-      return `color-mix(in oklab, ${color} ${Math.round(12 + Math.min(r, 1.5) * 16)}%, var(--surface-2))`;
+      return {
+        background: `linear-gradient(160deg, color-mix(in oklab, ${color} ${Math.round(14 + Math.min(r, 1.5) * 16)}%, transparent), color-mix(in oklab, ${color} 6%, transparent))`,
+        boxShadow: `inset 0 0 0 1px color-mix(in oklab, ${color} 30%, transparent)${r > 1 ? `, 0 0 18px -6px ${color}` : ""}`,
+      };
     }
-    return `color-mix(in oklab, var(--accent) ${Math.round(10 + (total / maxDay) * 35)}%, var(--surface-2))`;
+    return {
+      background: `color-mix(in oklab, var(--accent) ${Math.round(10 + (total / maxDay) * 40)}%, transparent)`,
+      boxShadow: "inset 0 0 0 1px var(--glass-border)",
+    };
   }
 
   return (
@@ -109,11 +115,11 @@ export default function CalendarPage() {
                         "relative flex aspect-square flex-col rounded-xl p-1.5 text-left transition sm:rounded-2xl sm:p-2",
                         !inMonth && "invisible",
                         future ? "text-faint" : "hover:ring-1 hover:ring-line",
-                        selectedDay === key && "ring-2 ring-accent!",
+                        selectedDay === key && "ring-2 ring-accent-2! shadow-[0_0_20px_-4px_var(--accent-2)]!",
                       )}
-                      style={{ background: tint(total) ?? "var(--surface-2)" }}
+                      style={cellStyle(total)}
                     >
-                      <span className={clsx("text-xs font-medium sm:text-sm", key === today && "grid size-5 place-items-center rounded-full bg-accent text-[11px] text-white sm:size-6")}>
+                      <span className={clsx("text-xs font-medium sm:text-sm", key === today && "bg-accent-gradient grid size-5 place-items-center rounded-full text-[11px] text-white shadow-[0_0_12px_var(--accent)] sm:size-6")}>
                         {d.getDate()}
                       </span>
                       {total > 0 && (

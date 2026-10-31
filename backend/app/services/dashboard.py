@@ -84,10 +84,13 @@ def _by_category(db: Session, user: User, month_filter: tuple, month_total: Deci
 
 
 def _daily_totals(db: Session, month_filter: tuple, start: date, last: date) -> list[dict]:
-    """One entry per day from start to last (inclusive), zero-filled; empty for a future month."""
+    """One entry per day from start to last (inclusive), zero-filled, with the running month total;
+    empty for a future month."""
     totals = dict(db.execute(select(Expense.spent_on, func.sum(Expense.amount)).where(*month_filter).group_by(Expense.spent_on)).all())
-    days = (last - start).days + 1
-    return [
-        {"day": day, "total": totals.get(day, Decimal(0))}
-        for day in (start + timedelta(days=i) for i in range(max(days, 0)))
-    ]
+    rows, running = [], Decimal(0)
+    for i in range(max((last - start).days + 1, 0)):
+        day = start + timedelta(days=i)
+        total = totals.get(day, Decimal(0))
+        running += total
+        rows.append({"day": day, "total": total, "cumulative": running})
+    return rows
